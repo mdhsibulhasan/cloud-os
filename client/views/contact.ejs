@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact — MD.Hasibul Hasan</title>
+  <link rel="icon" href="/assets/images/favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green: #00ff88; --bg: #050d0a; --border: rgba(0,255,136,0.18);
+      --text: #e2e8f0; --muted: #6b7280;
+    }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+    #space-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2.5rem; height: 56px;
+      background: rgba(5,13,10,0.85); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo { display: flex; align-items: center; gap: .6rem; font-weight: 700; font-size: 1.05rem; color: var(--green); text-decoration: none; }
+    .nav-links { display: flex; align-items: center; gap: 2rem; }
+    .nav-links a { color: var(--muted); text-decoration: none; font-size: .9rem; transition: color .2s; }
+    .nav-links a:hover { color: var(--green); }
+    .btn-signin { padding: .45rem 1.3rem; border: 1.5px solid var(--green); border-radius: 6px; color: var(--green) !important; font-weight: 600; font-size: .85rem; }
+    .btn-signin:hover { background: rgba(0,255,136,.1) !important; }
+
+    .page {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 80px 2rem 3rem;
+    }
+
+    .page-title {
+      font-size: 2.2rem; font-weight: 800; text-align: center; margin-bottom: .5rem;
+    }
+    .page-sub { color: var(--muted); text-align: center; margin-bottom: 3rem; font-size: .95rem; }
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr;
+      gap: 1.5rem;
+      width: 100%;
+      max-width: 860px;
+    }
+
+    .card {
+      background: rgba(10,26,18,0.65);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 2rem;
+      backdrop-filter: blur(10px);
+    }
+
+    .card-title { font-size: 1rem; font-weight: 700; margin-bottom: 1.5rem; }
+
+    .info-row {
+      display: flex; align-items: flex-start; gap: 1rem;
+      margin-bottom: 1.2rem;
+    }
+    .info-icon {
+      width: 36px; height: 36px; flex-shrink: 0;
+      background: rgba(0,255,136,.1);
+      border: 1px solid rgba(0,255,136,.3);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--green); font-size: .85rem;
+    }
+    .info-label { color: var(--muted); font-size: .72rem; margin-bottom: .15rem; }
+    .info-value { font-size: .88rem; color: var(--text); }
+
+    .social-row { display: flex; gap: .75rem; margin-top: 1.5rem; }
+    .social-btn {
+      width: 38px; height: 38px;
+      background: rgba(0,255,136,.08);
+      border: 1px solid rgba(0,255,136,.25);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--green); font-size: .9rem; text-decoration: none;
+      transition: background .2s, box-shadow .2s;
+    }
+    .social-btn:hover { background: rgba(0,255,136,.18); box-shadow: 0 0 12px rgba(0,255,136,.3); }
+
+    /* Form */
+    .form-group { margin-bottom: 1rem; }
+    .form-label {
+      display: flex; align-items: center; gap: .4rem;
+      font-size: .78rem; color: var(--muted); margin-bottom: .4rem;
+    }
+    .form-label i { color: var(--green); font-size: .75rem; }
+    .form-input, .form-textarea {
+      width: 100%; padding: .7rem 1rem;
+      background: rgba(0,255,136,.04);
+      border: 1px solid rgba(0,255,136,.2);
+      border-radius: 8px;
+      color: var(--text); font-size: .88rem;
+      transition: border-color .2s, box-shadow .2s;
+      font-family: inherit;
+    }
+    .form-input:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(0,255,136,.1);
+    }
+    .form-textarea { resize: vertical; min-height: 110px; }
+
+    .btn-send {
+      width: 100%; padding: .85rem;
+      background: transparent;
+      border: 1.5px solid var(--green);
+      border-radius: 8px;
+      color: var(--green);
+      font-weight: 700; font-size: .9rem;
+      letter-spacing: .06em;
+      cursor: pointer;
+      transition: background .2s, box-shadow .2s;
+      display: flex; align-items: center; justify-content: center; gap: .5rem;
+    }
+    .btn-send:hover { background: rgba(0,255,136,.1); box-shadow: 0 0 20px rgba(0,255,136,.3); }
+
+    .toast {
+      position: fixed; bottom: 2rem; right: 2rem; z-index: 999;
+      background: rgba(10,26,18,.95); border: 1px solid var(--green);
+      border-radius: 10px; padding: 1rem 1.5rem;
+      color: var(--green); font-size: .9rem;
+      transform: translateY(100px); opacity: 0;
+      transition: transform .3s, opacity .3s;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    @media (max-width: 680px) {
+      .contact-grid { grid-template-columns: 1fr; }
+      nav { padding: 0 1.2rem; }
+      .nav-links { gap: 1rem; }
+    }
+  </style>
+</head>
+<body>
+<canvas id="space-canvas"></canvas>
+
+<nav>
+  <a href="/" class="nav-logo"><i class="fas fa-cloud"></i> CloudOS</a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/about">About</a>
+    <a href="/auth" class="btn-signin">SIGN IN</a>
+  </div>
+</nav>
+
+<div class="page">
+  <h1 class="page-title">Get In Touch</h1>
+  <p class="page-sub">Want access to the archive or have a question? Send a message.</p>
+
+  <div class="contact-grid">
+    <!-- Info -->
+    <div class="card">
+      <div class="card-title">Contact Info</div>
+
+      <div class="info-row">
+        <div class="info-icon"><i class="fas fa-envelope"></i></div>
+        <div>
+          <div class="info-label">Email</div>
+          <div class="info-value">mdhasibulhasan0210@gmail.com</div>
+        </div>
+      </div>
+
+      <div class="info-row">
+        <div class="info-icon"><i class="fas fa-cloud"></i></div>
+        <div>
+          <div class="info-label">System</div>
+          <div class="info-value">Personal Cloud OS</div>
+        </div>
+      </div>
+
+      <div class="info-row">
+        <div class="info-icon"><i class="fas fa-user-shield"></i></div>
+        <div>
+          <div class="info-label">Access</div>
+          <div class="info-value">Admin approval required</div>
+        </div>
+      </div>
+
+      <div class="social-row">
+        <a href="https://github.com/mdhsibulhasan" class="social-btn" title="GitHub" target="_blank" rel="noopener noreferrer"><i class="fab fa-github"></i></a>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <div class="card">
+      <div class="card-title">Send Message</div>
+      <form id="contact-form">
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-user"></i> Name</label>
+          <input type="text" class="form-input" placeholder="Your name" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-envelope"></i> Email</label>
+          <input type="email" class="form-input" placeholder="your@gmail.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-comment"></i> Message</label>
+          <textarea class="form-textarea" placeholder="Your message..." required></textarea>
+        </div>
+        <button type="submit" class="btn-send">
+          <i class="fas fa-paper-plane"></i> SEND MESSAGE
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><i class="fas fa-check-circle"></i> Message sent successfully!</div>
+
+<script>
+// Space canvas
+(function() {
+  const canvas = document.getElementById('space-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+  function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  function Particle() { this.reset(); }
+  Particle.prototype.reset = function() {
+    this.x = Math.random() * W; this.y = Math.random() * H;
+    this.r = Math.random() < .12 ? Math.random() * 3 + 2 : Math.random() * 1.5 + .5;
+    this.isSquare = Math.random() < .1;
+    this.speed = Math.random() * .25 + .05;
+    this.alpha = Math.random() * .5 + .15;
+    this.twinkle = Math.random() * Math.PI * 2;
+    this.twinkleSpeed = Math.random() * .03 + .01;
+  };
+  Particle.prototype.draw = function() {
+    const a = this.alpha * (.6 + .4 * Math.sin(this.twinkle));
+    ctx.globalAlpha = a; ctx.fillStyle = '#00ff88';
+    if (this.isSquare) ctx.fillRect(this.x - this.r, this.y - this.r, this.r * 2, this.r * 2);
+    else { ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2); ctx.fill(); }
+    ctx.globalAlpha = 1;
+  };
+  Particle.prototype.update = function() {
+    this.y -= this.speed; this.twinkle += this.twinkleSpeed;
+    if (this.y + this.r < 0) { this.y = H + this.r; this.x = Math.random() * W; }
+  };
+  function init() { resize(); particles = Array.from({length: 150}, () => new Particle()); }
+  function loop() { ctx.clearRect(0,0,W,H); particles.forEach(p => { p.update(); p.draw(); }); requestAnimationFrame(loop); }
+  window.addEventListener('resize', resize);
+  init(); loop();
+})();
+
+// Form submit
+document.getElementById('contact-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const btn = this.querySelector('.btn-send');
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+  btn.disabled = true;
+  setTimeout(() => {
+    btn.innerHTML = '<i class="fas fa-paper-plane"></i> SEND MESSAGE';
+    btn.disabled = false;
+    this.reset();
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3500);
+  }, 1500);
+});
+</script>
+</body>
+</html>

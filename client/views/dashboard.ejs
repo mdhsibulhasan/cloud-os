@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — CloudOS</title>
+<link rel="icon" href="/assets/images/favicon.png" type="image/png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --green:#00ff88;--bg:#050d0a;--bg2:#0a1a12;--bg3:#0d2018;
+  --sw:200px;--border:rgba(0,255,136,0.15);--text:#e2e8f0;--muted:#6b7280;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex}
+
+/* ── CANVAS ── */
+#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:var(--sw);min-width:var(--sw);height:100vh;
+  background:rgba(6,14,10,0.97);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;position:fixed;left:0;top:0;z-index:50;
+  overflow-y:auto;transition:transform .3s ease;
+}
+.sb-brand{
+  display:flex;align-items:center;gap:.55rem;padding:1rem 1rem .6rem;
+  color:var(--green);font-weight:700;font-size:1rem;text-decoration:none;
+  border-bottom:1px solid var(--border);
+}
+.sb-brand i{font-size:1rem}
+.sb-profile{
+  display:flex;align-items:center;gap:.65rem;padding:.85rem .9rem;
+  border-bottom:1px solid var(--border);
+}
+.sb-avatar{
+  width:36px;height:36px;border-radius:50%;border:2px solid var(--green);
+  object-fit:cover;box-shadow:0 0 10px rgba(0,255,136,.3);flex-shrink:0;
+}
+.sb-name{font-size:.8rem;font-weight:700;line-height:1.2}
+.sb-role{font-size:.68rem;color:var(--green)}
+.sb-nav{flex:1;padding:.5rem .5rem 0}
+.ni{
+  display:flex;align-items:center;gap:.65rem;padding:.6rem .75rem;
+  border-radius:7px;color:var(--muted);font-size:.8rem;cursor:pointer;
+  transition:background .15s,color .15s,transform .15s;
+  border:none;background:none;width:100%;text-align:left;
+  margin-bottom:2px;text-decoration:none;position:relative;
+  opacity:0;transform:translateX(-20px);
+}
+.ni.loaded{opacity:1;transform:translateX(0)}
+.ni i{width:15px;text-align:center;font-size:.82rem;flex-shrink:0}
+.ni:hover{background:rgba(0,255,136,.08);color:var(--green);transform:translateX(3px)}
+.ni.active{background:rgba(0,255,136,.13);color:var(--green);font-weight:600}
+.ni .badge{
+  margin-left:auto;min-width:18px;height:18px;padding:0 5px;
+  background:var(--green);color:#050d0a;border-radius:9px;
+  font-size:.65rem;font-weight:700;display:flex;align-items:center;justify-content:center;
+}
+.sb-footer{padding:.6rem .5rem;border-top:1px solid var(--border)}
+
+/* ── MAIN ── */
+.main{margin-left:var(--sw);flex:1;height:100vh;overflow-y:auto;position:relative;z-index:1}
+.content{padding:1.5rem;transition:opacity 0.35s cubic-bezier(0.16,1,0.3,1), transform 0.35s cubic-bezier(0.16,1,0.3,1)}
+.topbar{
+  display:flex;align-items:center;gap:1rem;padding:.9rem 1.5rem;
+  background:rgba(5,13,10,.9);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;
+}
+.topbar-title{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:1rem;white-space:nowrap}
+.topbar-title i{color:var(--green)}
+.search-bar{
+  flex:1;display:flex;align-items:center;gap:.6rem;
+  background:rgba(0,255,136,.04);border:1px solid rgba(0,255,136,.2);
+  border-radius:8px;padding:.5rem .9rem;transition:border-color .2s,box-shadow .2s;
+}
+.search-bar:focus-within{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,255,136,.08)}
+.search-bar i{color:var(--muted);font-size:.85rem}
+.search-bar input{background:none;border:none;color:var(--text);font-size:.85rem;width:100%;outline:none;font-family:inherit}
+.search-bar input::placeholder{color:var(--muted)}
+.btn-upload{
+  display:flex;align-items:center;gap:.5rem;padding:.5rem 1.1rem;
+  background:transparent;border:1.5px solid var(--green);border-radius:7px;
+  color:var(--green);font-size:.8rem;font-weight:700;cursor:pointer;
+  transition:background .2s,box-shadow .2s;white-space:nowrap;
+}
+.btn-upload:hover{background:rgba(0,255,136,.1);box-shadow:0 0 15px rgba(0,255,136,.25)}
+
+.content{padding:1.5rem}
+
+/* ── FILE CARDS ── */
+.files-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem}
+.file-card{
+  background:rgba(10,26,18,.75);border:1px solid var(--border);border-radius:10px;
+  overflow:hidden;cursor:pointer;transition:border-color .2s,box-shadow .2s,transform .2s;
+  opacity:0;transform:translateY(20px);
+}
+.file-card.loaded{opacity:1;transform:translateY(0)}
+.file-card:hover{border-color:var(--green);box-shadow:0 0 20px rgba(0,255,136,.15);transform:translateY(-3px)}
+.file-thumb{width:100%;height:130px;object-fit:cover;display:block;background:#0a1a12}
+.file-body{padding:.8rem}
+.file-name{font-size:.82rem;font-weight:600;margin-bottom:.4rem;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file-meta{font-size:.7rem;color:var(--muted);margin-bottom:.6rem}
+.file-actions{display:flex;gap:.4rem}
+.btn-xs{
+  display:inline-flex;align-items:center;gap:.3rem;padding:.3rem .65rem;
+  border-radius:5px;font-size:.72rem;font-weight:600;cursor:pointer;border:none;
+  transition:all .15s;
+}
+.btn-xs-green{background:rgba(0,255,136,.1);color:var(--green);border:1px solid rgba(0,255,136,.25)}
+.btn-xs-green:hover{background:rgba(0,255,136,.2)}
+.btn-xs-red{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.2)}
+.btn-xs-red:hover{background:rgba(239,68,68,.2)}
+.btn-xs-gray{background:rgba(255,255,255,.06);color:var(--muted);border:1px solid rgba(255,255,255,.1)}
+.btn-xs-gray:hover{background:rgba(255,255,255,.1);color:var(--text)}
+.cat-badge{
+  display:inline-block;padding:.15rem .5rem;border-radius:4px;font-size:.65rem;font-weight:600;
+  background:rgba(0,255,136,.1);color:var(--green);border:1px solid rgba(0,255,136,.2);
+}
+
+/* ── EMPTY STATE ── */
+.empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:5rem 2rem;color:var(--muted);text-align:center;
+}
+.empty i{font-size:3.5rem;color:rgba(0,255,136,.3);margin-bottom:1rem;
+  animation:floatIcon 3s ease-in-out infinite}
+@keyframes floatIcon{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.empty p{font-size:.9rem;margin-bottom:1.2rem}
+
+/* ── NOTIFICATION ITEMS ── */
+.notif-item{
+  display:flex;align-items:flex-start;gap:.9rem;padding:.9rem;
+  background:rgba(10,26,18,.7);border:1px solid var(--border);border-radius:9px;
+  margin-bottom:.6rem;transition:border-color .2s;
+  opacity:0;transform:translateX(-15px);
+}
+.notif-item.loaded{opacity:1;transform:translateX(0)}
+.notif-item.unread{border-left:3px solid var(--green)}
+.notif-item:hover{border-color:rgba(0,255,136,.35)}
+.notif-icon{
+  width:34px;height:34px;border-radius:50%;flex-shrink:0;
+  background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.2);
+  display:flex;align-items:center;justify-content:center;color:var(--green);font-size:.85rem;
+}
+.notif-msg{font-size:.82rem;line-height:1.5}
+.notif-time{font-size:.7rem;color:var(--muted);margin-top:.2rem}
+
+/* ── BROADCAST ITEMS ── */
+.bc-item{
+  background:rgba(10,26,18,.7);border:1px solid var(--border);border-radius:9px;
+  padding:1rem 1.2rem;margin-bottom:.7rem;transition:border-color .2s;
+  opacity:0;transform:translateY(10px);
+}
+.bc-item.loaded{opacity:1;transform:translateY(0)}
+.bc-item.pinned{border-left:3px solid var(--green)}
+.bc-item:hover{border-color:rgba(0,255,136,.3)}
+.bc-msg{font-size:.85rem;line-height:1.6;margin-bottom:.4rem}
+.bc-time{font-size:.7rem;color:var(--muted)}
+
+/* ── CHAT ── */
+.chat-layout{display:grid;grid-template-columns:240px 1fr;gap:1rem;height:calc(100vh - 130px);min-height:400px}
+.chat-list{background:rgba(10,26,18,.7);border:1px solid var(--border);border-radius:10px;overflow-y:auto}
+.chat-item{padding:.85rem 1rem;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;user-select:none}
+.chat-item:hover,.chat-item.active{background:rgba(0,255,136,.07)}
+.chat-item-name{font-size:.83rem;font-weight:600}
+.chat-item-preview{font-size:.72rem;color:var(--muted);margin-top:.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-win{background:rgba(10,26,18,.7);border:1px solid var(--border);border-radius:10px;display:flex;flex-direction:column;overflow:hidden}
+.chat-hdr{padding:.9rem 1.2rem;border-bottom:1px solid var(--border);font-weight:700;font-size:.88rem;display:flex;align-items:center;gap:.6rem;flex-shrink:0;background:rgba(0,0,0,.2)}
+.chat-msgs{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:.6rem;scroll-behavior:smooth}
+.msg{max-width:72%;padding:.65rem .95rem;border-radius:12px;font-size:.83rem;line-height:1.55;word-break:break-word}
+.msg-in{background:rgba(0,255,136,.07);border:1px solid rgba(0,255,136,.15);align-self:flex-start;border-bottom-left-radius:4px}
+.msg-out{background:rgba(0,255,136,.15);border:1px solid rgba(0,255,136,.28);align-self:flex-end;border-bottom-right-radius:4px}
+.msg-time{font-size:.65rem;color:var(--muted);margin-top:.3rem;text-align:right}
+.msg-in .msg-time{text-align:left}
+.chat-inp{padding:.85rem;border-top:1px solid var(--border);display:flex;gap:.6rem;flex-shrink:0;background:rgba(0,0,0,.15)}
+.chat-inp input{flex:1;padding:.62rem .9rem;background:rgba(0,255,136,.04);border:1px solid rgba(0,255,136,.2);border-radius:8px;color:var(--text);font-size:.85rem;font-family:inherit;transition:border-color .2s,box-shadow .2s}
+.chat-inp input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(0,255,136,.08)}
+@keyframes msgBubbleIn{from{opacity:0;transform:translateY(8px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+/* ── SETTINGS ── */
+.settings-card{background:rgba(10,26,18,.7);border:1px solid var(--border);border-radius:10px;padding:1.8rem;max-width:500px}
+.form-group{margin-bottom:1rem}
+.form-label{display:block;font-size:.75rem;color:var(--muted);margin-bottom:.35rem;font-weight:600}
+.form-input,.form-select,.form-textarea{
+  width:100%;padding:.65rem .9rem;background:rgba(0,255,136,.04);
+  border:1px solid rgba(0,255,136,.2);border-radius:7px;color:var(--text);
+  font-size:.85rem;font-family:inherit;transition:border-color .2s,box-shadow .2s;
+}
+.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(0,255,136,.08)}
+.form-textarea{resize:vertical;min-height:80px}
+.form-select option{background:var(--bg2)}
+.btn-save{
+  width:100%;padding:.75rem;background:transparent;border:1.5px solid var(--green);
+  border-radius:8px;color:var(--green);font-weight:700;font-size:.88rem;cursor:pointer;
+  transition:background .2s,box-shadow .2s;display:flex;align-items:center;justify-content:center;gap:.5rem;
+}
+.btn-save:hover{background:rgba(0,255,136,.1);box-shadow:0 0 18px rgba(0,255,136,.25)}
+.prof-preview{width:80px;height:80px;border-radius:50%;border:2px solid var(--green);object-fit:cover;margin-bottom:1rem}
+
+/* ── MODAL ── */
+.modal-ov{
+  position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(5px);
+  z-index:200;display:none;align-items:center;justify-content:center;
+}
+.modal-ov.open{display:flex}
+.modal{
+  background:var(--bg2);border:1px solid var(--border);border-radius:14px;
+  padding:1.8rem;width:90%;max-width:500px;max-height:90vh;overflow-y:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,.6);
+  animation:modalIn .25s ease-out;
+}
+@keyframes modalIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.3rem}
+.modal-hdr h3{font-size:.95rem;font-weight:700}
+.modal-close{background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer;padding:.2rem;line-height:1}
+.modal-close:hover{color:var(--text)}
+.modal-footer{display:flex;gap:.7rem;margin-top:1.3rem;justify-content:flex-end}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:1.5rem;right:1.5rem;z-index:999;
+  background:var(--bg2);border:1px solid var(--green);border-radius:10px;
+  padding:.85rem 1.3rem;color:var(--green);font-size:.83rem;
+  transform:translateY(80px);opacity:0;transition:transform .3s,opacity .3s;
+  display:flex;align-items:center;gap:.55rem;
+}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.err{border-color:#ef4444;color:#ef4444}
+
+/* ── HAMBURGER ── */
+.hamburger{
+  display:none;position:fixed;top:.8rem;left:.8rem;z-index:100;
+  background:var(--bg2);border:1px solid var(--border);border-radius:7px;
+  width:38px;height:38px;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--green);font-size:1rem;
+}
+.mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:49}
+
+/* ── SEARCH RESULTS ── */
+.search-results{
+  position:absolute;top:100%;left:0;right:0;margin-top:.3rem;
+  background:var(--bg2);border:1px solid var(--border);border-radius:9px;
+  max-height:300px;overflow-y:auto;z-index:50;
+  box-shadow:0 10px 30px rgba(0,0,0,.5);
+}
+.sr-item{padding:.75rem 1rem;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s;font-size:.83rem}
+.sr-item:hover{background:rgba(0,255,136,.07)}
+.sr-item:last-child{border-bottom:none}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .hamburger{display:flex}
+  .mob-overlay.open{display:block}
+  .files-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+  .chat-layout{grid-template-columns:1fr;height:auto}
+  .topbar{padding:.7rem 1rem}
+}
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+<button class="hamburger" id="hamburger"><i class="fas fa-bars"></i></button>
+<div class="mob-overlay" id="mob-overlay"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <a href="/" class="sb-brand"><i class="fas fa-cloud"></i> CloudOS</a>
+  <div class="sb-profile">
+    <img src="<%= user.profilePicture %>?v=<%= Date.now() %>" class="sb-avatar" id="sb-avatar"
+         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiMwNjRlM2IiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMDBmZjg4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5NSDwvdGV4dD48L3N2Zz4='">
+    <div>
+      <div class="sb-name" id="sb-name"><%= user.username %></div>
+      <div class="sb-role"><%= user.role === 'admin' ? 'System Admin' : user.role === 'moderator' ? 'Moderator' : 'Approved User' %></div>
+    </div>
+  </div>
+  <nav class="sb-nav" id="sb-nav">
+    <button class="ni active" data-view="myfiles"><i class="fas fa-folder"></i> My Files</button>
+    <button class="ni" data-view="shared"><i class="fas fa-share-alt"></i> Shared</button>
+    <button class="ni" data-view="explorer"><i class="fas fa-compass"></i> File Explorer</button>
+    <button class="ni" data-view="messages"><i class="fas fa-comments"></i> Messages</button>
+    <button class="ni" data-view="broadcasts"><i class="fas fa-bullhorn"></i> Broadcasts</button>
+    <button class="ni" data-view="bookmarks"><i class="fas fa-bookmark"></i> Bookmarks</button>
+    <button class="ni" data-view="notifications"><i class="fas fa-bell"></i> Notifications<span class="badge" id="notif-badge" style="display:none">0</span></button>
+    <button class="ni" data-view="settings"><i class="fas fa-cog"></i> Settings</button>
+    <% if (user.role === 'admin' || user.role === 'moderator') { %>
+    <a href="/admin" class="ni" style="margin-top:.5rem"><i class="fas fa-shield-alt"></i> <%= user.role === 'admin' ? 'Admin Panel' : 'Moderator Panel' %></a>
+    <% } %>
+  </nav>
+  <div class="sb-footer">
+    <button class="ni" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main" id="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title"><i class="fas fa-folder"></i> My Files</div>
+    <div class="search-bar" style="position:relative">
+      <i class="fas fa-search"></i>
+      <input type="text" id="search-input" placeholder="Search files...">
+      <div class="search-results" id="search-results" style="display:none"></div>
+    </div>
+    <button class="btn-upload" onclick="openUploadModal()"><i class="fas fa-upload"></i> UPLOAD</button>
+  </div>
+  <div class="content" id="content"></div>
+</main>
+
+<!-- MODAL -->
+<div class="modal-ov" id="modal"><div class="modal" id="modal-body"></div></div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+<script>
+// ── SPACE CANVAS ──
+(function(){
+  const c=document.getElementById('bg-canvas'),ctx=c.getContext('2d');
+  let W,H,pts=[],shapes=[];
+  function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight;}
+  // Particles
+  function P(){this.reset(true)}
+  P.prototype.reset=function(init){
+    this.x=Math.random()*W;this.y=init?Math.random()*H:H+10;
+    this.r=Math.random()<.1?Math.random()*3+2:Math.random()*1.5+.4;
+    this.sq=Math.random()<.09;this.sp=Math.random()*.22+.04;
+    this.a=Math.random()*.55+.12;this.tw=Math.random()*Math.PI*2;
+    this.ts=Math.random()*.025+.008;
+  };
+  P.prototype.draw=function(){
+    const a=this.a*(.55+.45*Math.sin(this.tw));
+    ctx.globalAlpha=a;ctx.fillStyle='#00ff88';
+    if(this.sq)ctx.fillRect(this.x-this.r,this.y-this.r,this.r*2,this.r*2);
+    else{ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,Math.PI*2);ctx.fill();}
+    ctx.globalAlpha=1;
+  };
+  P.prototype.update=function(){
+    this.y-=this.sp;this.tw+=this.ts;
+    if(this.y+this.r<0)this.reset(false);
+  };
+  // Wireframe shapes
+  function makeIco(cx,cy,r){
+    const pts=[];const phi=(1+Math.sqrt(5))/2;
+    const raw=[[0,1,phi],[0,-1,phi],[0,1,-phi],[0,-1,-phi],[1,phi,0],[-1,phi,0],[1,-phi,0],[-1,-phi,0],[phi,0,1],[phi,0,-1],[-phi,0,1],[-phi,0,-1]];
+    const edges=[[0,1],[0,4],[0,5],[0,8],[0,10],[1,6],[1,7],[1,8],[1,10],[2,3],[2,4],[2,5],[2,9],[2,11],[3,6],[3,7],[3,9],[3,11],[4,8],[4,9],[5,10],[5,11],[6,8],[6,9],[7,10],[7,11],[8,9],[10,11]];
+    const norm=Math.sqrt(1+phi*phi);
+    return{cx,cy,r,pts:raw.map(p=>[p[0]/norm,p[1]/norm,p[2]/norm]),edges,rot:0,rotSpeed:Math.random()*.008+.003,alpha:0.18+Math.random()*.1};
+  }
+  function drawShape(s){
+    const cos=Math.cos(s.rot),sin=Math.sin(s.rot);
+    const proj=s.pts.map(p=>{
+      const x2=p[0]*cos-p[2]*sin,z2=p[0]*sin+p[2]*cos;
+      return[s.cx+x2*s.r,s.cy+p[1]*s.r];
+    });
+    ctx.strokeStyle='#00ff88';ctx.lineWidth=.8;ctx.globalAlpha=s.alpha;
+    s.edges.forEach(e=>{
+      ctx.beginPath();ctx.moveTo(proj[e[0]][0],proj[e[0]][1]);
+      ctx.lineTo(proj[e[1]][0],proj[e[1]][1]);ctx.stroke();
+    });
+    ctx.globalAlpha=1;
+  }
+  function init(){
+    resize();
+    pts=Array.from({length:160},()=>new P());
+    shapes=[
+      makeIco(W*.28,H*.55,38),
+      makeIco(W*.55,H*.62,28),
+      makeIco(W*.72,H*.45,22),
+    ];
+  }
+  function loop(){
+    ctx.clearRect(0,0,W,H);
+    pts.forEach(p=>{p.update();p.draw();});
+    shapes.forEach(s=>{s.rot+=s.rotSpeed;drawShape(s);});
+    requestAnimationFrame(loop);
+  }
+  window.addEventListener('resize',()=>{resize();shapes[0].cx=W*.28;shapes[0].cy=H*.55;shapes[1].cx=W*.55;shapes[1].cy=H*.62;shapes[2].cx=W*.72;shapes[2].cy=H*.45;});
+  init();loop();
+})();
+
+// ── MOBILE ──
+const hamburger=document.getElementById('hamburger');
+const sidebar=document.getElementById('sidebar');
+const mobOverlay=document.getElementById('mob-overlay');
+hamburger.addEventListener('click',()=>{sidebar.classList.toggle('open');mobOverlay.classList.toggle('open');});
+mobOverlay.addEventListener('click',()=>{sidebar.classList.remove('open');mobOverlay.classList.remove('open');});
+
+// ── SIDEBAR STAGGER ANIMATION ──
+document.querySelectorAll('.ni').forEach((el,i)=>{
+  setTimeout(()=>el.classList.add('loaded'),80+i*60);
+});
+
+// ── TOAST ──
+function toast(msg,type='ok'){
+  const t=document.getElementById('toast');
+  t.className='toast'+(type==='err'?' err':'');
+  t.innerHTML=(type==='err'?'<i class="fas fa-times-circle"></i>':'<i class="fas fa-check-circle"></i>')+' '+msg;
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+// ── MODAL ──
+function openModal(html){document.getElementById('modal-body').innerHTML=html;document.getElementById('modal').classList.add('open');}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))closeModal();});
+
+// ── API ──
+async function api(url,opts={}){
+  const r=await fetch('/api'+url,{...opts,credentials:'include',headers:{'Content-Type':'application/json',...(opts.headers||{})}});
+  let d;
+  try{d=await r.json();}catch(e){throw new Error('Server error ('+r.status+')');}
+  if(!r.ok)throw new Error(d.message||'Request failed');
+  return d;
+}
+async function apiForm(url,fd,method='POST'){
+  const r=await fetch('/api'+url,{method,body:fd,credentials:'include'});
+  let d;
+  try{d=await r.json();}catch(e){throw new Error('Server error ('+r.status+')');}
+  if(!r.ok)throw new Error(d.message||'Upload failed');
+  return d;
+}
+
+// ── HELPERS ──
+function fmtSize(b){if(!b||b===0)return'0 B';const k=1024,s=['B','KB','MB','GB'];const i=Math.floor(Math.log(b)/Math.log(k));return(b/Math.pow(k,i)).toFixed(1)+' '+s[i];}
+function fmtDate(d){if(!d)return'';return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+function animateCards(sel){document.querySelectorAll(sel).forEach((el,i)=>{setTimeout(()=>el.classList.add('loaded'),i*60);});}
+
+// ── NAVIGATION ──
+let currentView='myfiles';
+document.querySelectorAll('.ni[data-view]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.ni[data-view]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    currentView=btn.dataset.view;
+    const titles={myfiles:'My Files',shared:'Shared Files',explorer:'File Explorer',
+      messages:'Messages',broadcasts:'Broadcasts',bookmarks:'Bookmarks',
+      notifications:'Notifications',settings:'Settings'};
+    const icons={myfiles:'fa-folder',shared:'fa-share-alt',explorer:'fa-compass',
+      messages:'fa-comments',broadcasts:'fa-bullhorn',bookmarks:'fa-bookmark',
+      notifications:'fa-bell',settings:'fa-cog'};
+    document.getElementById('topbar-title').innerHTML=`<i class="fas ${icons[currentView]||'fa-circle'}"></i> ${titles[currentView]||''}`;
+    const showSearch=['myfiles','shared','explorer','bookmarks'].includes(currentView);
+    document.querySelector('.search-bar').style.display=showSearch?'flex':'none';
+    document.querySelector('.btn-upload').style.display=currentView==='myfiles'?'flex':'none';
+    loadView(currentView);
+    if(window.innerWidth<768){sidebar.classList.remove('open');mobOverlay.classList.remove('open');}
+  });
+});
+
+function loadView(v){
+  const views={myfiles:viewMyFiles,shared:viewShared,explorer:viewExplorer,
+    messages:viewMessages,broadcasts:viewBroadcasts,bookmarks:viewBookmarks,
+    notifications:viewNotifications,settings:viewSettings};
+  
+  if(!views[v]) return;
+  
+  // Use smooth transition
+  const content = document.getElementById('content');
+  content.style.opacity = '0';
+  content.style.transform = 'translateX(-20px)';
+  content.style.transition = 'opacity 0.25s ease-in, transform 0.25s ease-in';
+  
+  setTimeout(() => {
+    views[v]();
+    
+    // Scroll to top
+    document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Enter animation
+    requestAnimationFrame(() => {
+      content.style.transition = 'opacity 0.35s cubic-bezier(0.16,1,0.3,1), transform 0.35s cubic-bezier(0.16,1,0.3,1)';
+      content.style.opacity = '1';
+      content.style.transform = 'translateX(0)';
+    });
+  }, 250);
+}
+
+// ── LOGOUT ──
+async function doLogout(){
+  try{await api('/auth/logout',{method:'POST'});}catch(e){}
+  window.location.href='/';
+}
+
+// ── NOTIFICATION BADGE ──
+async function refreshBadge(){
+  try{
+    const d=await api('/notifications/unread-count');
+    const b=document.getElementById('notif-badge');
+    if(d.count>0){b.textContent=d.count;b.style.display='flex';}
+    else b.style.display='none';
+  }catch(e){}
+}
+
+// ── MY FILES ──
+async function viewMyFiles(){
+  document.getElementById('content').innerHTML=`<div class="files-grid" id="files-grid"><div class="empty"><i class="fas fa-spinner fa-spin" style="animation:none;font-size:1.5rem;opacity:.5"></i></div></div>`;
+  try{
+    const d=await api('/files?personal=true');
+    if(!d.files||!d.files.length){
+      document.getElementById('files-grid').innerHTML=`<div class="empty" style="grid-column:1/-1"><i class="fas fa-folder-open"></i><p>No personal files yet. Upload your first file!</p><button class="btn-upload" onclick="openUploadModal()" style="margin-top:.5rem"><i class="fas fa-upload"></i> UPLOAD</button></div>`;
+      return;
+    }
+    document.getElementById('files-grid').innerHTML=d.files.map(f=>fileCard(f,true)).join('');
+    animateCards('.file-card');
+  }catch(e){toast(e.message,'err');}
+}
+
+function fileCard(f,showActions=false){
+  const thumb=f.thumbnailPath||'/assets/images/default-thumb.jpg';
+  const cacheBuster = '?v=' + Date.now();
+  return`<div class="file-card" onclick="previewFile('${f.id}','${(f.filename||'').replace(/'/g,"\\'")}','${f.mimetype||''}')">
+    <img src="${thumb}${cacheBuster}" class="file-thumb" alt="${f.filename}" onerror="this.src='/assets/images/default-thumb.jpg${cacheBuster}'">
+    <div class="file-body">
+      <div class="file-name" title="${f.filename}">${f.filename}</div>
+      <div class="file-meta">${fmtSize(f.size)} · ${fmtDate(f.createdAt)}</div>
+      <div style="margin-bottom:.5rem"><span class="cat-badge">${f.category||'file'}</span></div>
+      ${showActions?`<div class="file-actions" onclick="event.stopPropagation()">
+        <button class="btn-xs btn-xs-green" onclick="openShareModal('${f.id}','${(f.filename||'').replace(/'/g,"\\'")}')"><i class="fas fa-share"></i></button>
+        <button class="btn-xs btn-xs-red" onclick="deleteFile('${f.id}')"><i class="fas fa-trash"></i></button>
+        ${f.downloadAllowed!==false?`<button class="btn-xs btn-xs-gray" onclick="downloadFile('${f.id}','${(f.filename||'').replace(/'/g,"\\'")}')"><i class="fas fa-download"></i></button>`:''}
+      </div>`:''}
+    </div>
+  </div>`;
+}
+
+async function deleteFile(id){
+  if(!confirm('Delete this file?'))return;
+  try{await api(`/files/${id}`,{method:'DELETE'});toast('File deleted');viewMyFiles();}
+  catch(e){toast(e.message,'err');}
+}
+
+async function downloadFile(id,name){
+  try{
+    const r=await fetch(`/api/files/preview/${id}`,{credentials:'include'});
+    if(!r.ok)throw new Error('Download failed');
+    const blob=await r.blob();
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=name;
+    document.body.appendChild(a);a.click();
+    URL.revokeObjectURL(url);document.body.removeChild(a);
+    toast('Download started');
+  }catch(e){toast(e.message,'err');}
+}
+
+// ── SHARED FILES ──
+async function viewShared(){
+  document.getElementById('content').innerHTML=`<div class="files-grid" id="files-grid"><div class="empty" style="grid-column:1/-1"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;opacity:.5"></i></div></div>`;
+  try{
+    const d=await api('/files?shared=true');
+    if(!d.files||!d.files.length){
+      document.getElementById('files-grid').innerHTML=`<div class="empty" style="grid-column:1/-1"><i class="fas fa-share-alt"></i><p>No files shared with you yet.</p></div>`;
+      return;
+    }
+    document.getElementById('files-grid').innerHTML=d.files.map(f=>fileCard(f,false)).join('');
+    animateCards('.file-card');
+  }catch(e){toast(e.message,'err');}
+}
+
+// ── BOOKMARKS ──
+async function viewBookmarks(){
+  document.getElementById('content').innerHTML=`<div class="empty"><i class="fas fa-bookmark"></i><p>Bookmarks coming soon.</p></div>`;
+}
+</script>
+
+<script>
+// ── FILE EXPLORER (SUBJECTS) ──
+let explorerState={view:'subjects',subjectId:null,subjectName:'',chapterId:null,chapterName:''};
+
+async function viewExplorer(){
+  explorerState={view:'subjects',subjectId:null,subjectName:'',chapterId:null,chapterName:''};
+  await loadExplorerSubjects();
+}
+
+async function loadExplorerSubjects(){
+  document.getElementById('content').innerHTML=`
+    <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.2rem;padding:.7rem 1rem;background:rgba(10,26,18,.7);border:1px solid var(--border);border-radius:9px">
+      <i class="fas fa-home" style="color:var(--green)"></i>
+      <span style="font-size:.82rem;color:var(--muted)">Archive</span>
+    </div>
+    <div class="search-bar" style="margin-bottom:1.2rem;display:flex">
+      <i class="fas fa-search"></i>
+      <input type="text" placeholder="Search the archive..." id="explorer-search" oninput="filterSubjects(this.value)">
+    </div>
+    <div id="subjects-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem">
+      <div class="empty" style="grid-column:1/-1"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;opacity:.5"></i></div>
+    </div>`;
+  try{
+    const d=await api('/subjects');
+    window._allSubjects=d.subjects||[];
+    renderSubjectCards(window._allSubjects);
+  }catch(e){toast(e.message,'err');}
+}
+
+function renderSubjectCards(subjects){
+  const grid=document.getElementById('subjects-grid');
+  if(!subjects.length){
+    grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><i class="fas fa-book-open"></i><p>No subjects available yet.</p></div>`;
+    return;
+  }
+  grid.innerHTML=subjects.map(s=>`
+    <div class="file-card" style="text-align:center;padding:0" onclick="loadExplorerChapters('${s.id}','${(s.name||'').replace(/'/g,"\\'")}')">
+      <div style="padding:1.5rem 1rem 1rem">
+        <div style="width:52px;height:52px;background:rgba(0,255,136,.12);border:1px solid rgba(0,255,136,.3);border-radius:10px;display:flex;align-items:center;justify-content:center;margin:0 auto .8rem;font-size:1.4rem;color:var(--green)">
+          <i class="fas fa-book-open"></i>
+        </div>
+        <div style="font-size:.83rem;font-weight:700;margin-bottom:.3rem">${s.name}</div>
+        <div style="font-size:.7rem;color:var(--muted)">${s.chapterCount||0} chapters · ${s.fileCount||0} files</div>
+      </div>
+    </div>`).join('');
+  animateCards('.file-card');
+}
+
+function filterSubjects(q){
+  if(!window._allSubjects)return;
+  const filtered=window._allSubjects.filter(s=>s.name.toLowerCase().includes(q.toLowerCase()));
+  renderSubjectCards(filtered);
+}
+
+async function loadExplorerChapters(subjectId,subjectName){
+  explorerState={view:'chapters',subjectId,subjectName,chapterId:null,chapterName:''};
+  document.getElementById('content').innerHTML=`
+    <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1.2rem;padding:.7rem 1rem;background:rgba(10,26,18,.7);border:1px solid var(--border);border-radius:9px;font-size:.82rem">
+      <i class="fas fa-home" style="color:var(--green);cursor:pointer" onclick="viewExplorer()"></i>
+      <span style="color:var(--muted)">/</span>
+      <span style="color:var(--green);cursor:pointer" onclick="viewExplorer()">${subjectName}</span>
+    </div>
+    <div id="chapters-list"><div class="empty"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;opacity:.5"></i></div></div>`;
+  try{
+    const d=await api(`/subjects/${subjectId}/chapters`);
+    if(!d.chapters||!d.chapters.length){
+      document.getElementById('chapters-list').innerHTML=`<div class="empty"><i class="fas fa-folder-open"></i><p>No chapters in this subject yet.</p></div>`;
+      return;
+    }
+    document.getElementById('chapters-list').innerHTML=`<div style="display:flex;flex-direction:column;gap:.6rem">
+      ${d.chapters.map((c,i)=>`
+        <div class="notif-item" style="cursor:pointer" onclick="loadExplorerFiles('${c.id}','${(c.name||'').replace(/'/g,"\\'")}','${subjectId}','${(subjectName||'').replace(/'/g,"\\'")}')">
+          <div class="notif-icon" style="width:40px;height:40px;font-size:.9rem;border-radius:8px;flex-shrink:0">${i+1}</div>
+          <div style="flex:1">
+            <div style="font-size:.85rem;font-weight:600">${c.name}</div>
+            <div style="font-size:.72rem;color:var(--muted);margin-top:.15rem">${c.fileCount||0} files</div>
+          </div>
+          <i class="fas fa-chevron-right" style="color:var(--muted);font-size:.75rem"></i>
+        </div>`).join('')}
+    </div>`;
+    animateCards('.notif-item');
+  }catch(e){toast(e.message,'err');}
+}
+
+async function loadExplorerFiles(chapterId,chapterName,subjectId,subjectName){
+  explorerState={view:'files',subjectId,subjectName,chapterId,chapterName};
+  document.getElementById('content').innerHTML=`
+    <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1.2rem;padding:.7rem 1rem;background:rgba(10,26,18,.7);border:1px solid var(--border);border-radius:9px;font-size:.82rem">
+      <i class="fas fa-home" style="color:var(--green);cursor:pointer" onclick="viewExplorer()"></i>
+      <span style="color:var(--muted)">/</span>
+      <span style="color:var(--green);cursor:pointer" onclick="loadExplorerChapters('${subjectId}','${(subjectName||'').replace(/'/g,"\\'")}')"> ${subjectName}</span>
+      <span style="color:var(--muted)">/</span>
+      <span style="color:var(--text)">${chapterName}</span>
+    </div>
+    <div class="files-grid" id="chapter-files-grid"><div class="empty" style="grid-column:1/-1"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;opacity:.5"></i></div></div>`;
+  try{
+    const d=await api(`/files?chapterId=${chapterId}`);
+    if(!d.files||!d.files.length){
+      document.getElementById('chapter-files-grid').innerHTML=`<div class="empty" style="grid-column:1/-1"><i class="fas fa-file"></i><p>No files in this chapter yet.</p></div>`;
+      return;
+    }
+    document.getElementById('chapter-files-grid').innerHTML=d.files.map(f=>fileCard(f,false)).join('');
+    animateCards('.file-card');
+  }catch(e){toast(e.message,'err');}
+}
+
+// ── MESSAGES ──
+let activeChatUser=null;
+async function viewMessages(){
+  document.getElementById('content').innerHTML=`
+    <div class="chat-layout">
+      <div class="chat-list" id="chat-list"><div style="padding:1rem;color:var(--muted);font-size:.82rem">Loading...</div></div>
+      <div class="chat-win" id="chat-win">
+        <div class="chat-hdr"><i class="fas fa-comments" style="color:var(--green)"></i> Select a conversation</div>
+        <div class="chat-msgs" id="chat-msgs" style="align-items:center;justify-content:center">
+          <div style="color:var(--muted);font-size:.85rem;text-align:center">Select a user to start messaging</div>
+        </div>
+      </div>
+    </div>`;
+  try{
+    const d=await api('/users/approved');
+    if(!d.users||!d.users.length){document.getElementById('chat-list').innerHTML='<div style="padding:1rem;color:var(--muted);font-size:.82rem">No users available</div>';return;}
+    document.getElementById('chat-list').innerHTML=d.users.map(u=>`
+      <div class="chat-item" onclick="openChat('${u.id}','${(u.username||'').replace(/'/g,"\\'")}','${u.profilePicture||''}')">
+        <div style="display:flex;align-items:center;gap:.6rem">
+          <img src="${u.profilePicture||'/assets/images/default-avatar.png'}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:1px solid var(--border)" onerror="this.src='/assets/images/default-avatar.png'">
+          <div><div class="chat-item-name">${u.username}</div><div class="chat-item-preview">${u.email}</div></div>
+        </div>
+      </div>`).join('');
+  }catch(e){toast(e.message,'err');}
+}
+
+async function openChat(userId,username,pic){
+  activeChatUser={id:userId,name:username,pic:pic||''};
+  document.querySelectorAll('.chat-item').forEach(i=>i.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.getElementById('chat-win').innerHTML=`
+    <div class="chat-hdr" id="chat-hdr-main">
+      <img src="${pic||'/assets/images/default-avatar.png'}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:1px solid var(--border)" onerror="this.src='/assets/images/default-avatar.png'">
+      <span>${username}</span>
+      <span id="chat-hdr-status" style="font-size:.7rem;color:var(--green);margin-left:.4rem"></span>
+    </div>
+    <div class="chat-msgs" id="chat-msgs"><div style="color:var(--muted);font-size:.82rem;margin:auto;display:flex;align-items:center;gap:.5rem"><span class="spinner" style="width:16px;height:16px;border-width:2px"></span> Loading...</div></div>
+    <div class="chat-inp">
+      <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off"
+             onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg();}"
+             oninput="emitTyping(this.value.length>0)">
+      <button class="btn-upload" style="padding:.5rem .9rem;flex-shrink:0" onclick="sendMsg()">
+        <i class="fas fa-paper-plane"></i>
+      </button>
+    </div>`;
+  await loadChatMessages(userId);
+}
+
+async function loadChatMessages(userId){
+  try{
+    const d=await api(`/messages?with=${userId}`);
+    const msgs=d.conversation.messages;
+    const container=document.getElementById('chat-msgs');
+    if(!container)return;
+    if(!msgs.length){
+      container.innerHTML='<div style="color:var(--muted);font-size:.82rem;margin:auto;text-align:center">No messages yet.<br>Say hello! 👋</div>';
+      return;
+    }
+    container.innerHTML=msgs.map((m,i)=>`
+      <div class="msg ${m.isMine?'msg-out':'msg-in'}" style="animation:msgBubbleIn .25s ease-out ${i*20}ms both">
+        <div>${escHtml(m.text)}</div>
+        <div class="msg-time">${fmtDate(m.createdAt)}</div>
+      </div>`).join('');
+    container.scrollTop=container.scrollHeight;
+  }catch(e){
+    const container=document.getElementById('chat-msgs');
+    if(container)container.innerHTML=`<div style="color:#ef4444;font-size:.82rem;margin:auto">${e.message}</div>`;
+  }
+}
+
+let typingTimer=null;
+function emitTyping(isTyping){
+  if(!socket||!activeChatUser)return;
+  socket.emit('typing',{to:activeChatUser.id,isTyping});
+  if(isTyping){
+    clearTimeout(typingTimer);
+    typingTimer=setTimeout(()=>socket.emit('typing',{to:activeChatUser.id,isTyping:false}),2000);
+  }
+}
+
+function escHtml(str){
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function appendMessage(text,isMine,createdAt){
+  const container=document.getElementById('chat-msgs');
+  if(!container)return;
+  // Remove empty state if present
+  const empty=container.querySelector('div[style*="margin:auto"]');
+  if(empty)empty.remove();
+  const msgEl=document.createElement('div');
+  msgEl.className='msg '+(isMine?'msg-out':'msg-in');
+  msgEl.style.animation='msgBubbleIn .3s cubic-bezier(0.34,1.56,0.64,1)';
+  msgEl.innerHTML=`<div>${escHtml(text)}</div><div class="msg-time">${fmtDate(createdAt||new Date())}</div>`;
+  container.appendChild(msgEl);
+  container.scrollTop=container.scrollHeight;
+}
+
+async function sendMsg(){
+  if(!activeChatUser)return;
+  const input=document.getElementById('chat-input');
+  if(!input)return;
+  const text=input.value.trim();
+  if(!text)return;
+  input.value='';
+  emitTyping(false);
+
+  // Optimistic UI — show message immediately
+  appendMessage(text,true,new Date());
+
+  try{
+    await api('/messages',{method:'POST',body:JSON.stringify({to:activeChatUser.id,text})});
+    // Message confirmed — already shown optimistically
+  }catch(e){
+    toast(e.message,'err');
+    // Remove the optimistic message on failure
+    const container=document.getElementById('chat-msgs');
+    if(container){
+      const last=container.lastElementChild;
+      if(last&&last.classList.contains('msg-out'))last.remove();
+    }
+  }
+}
+
+// ── BROADCASTS ──
+async function viewBroadcasts(){
+  document.getElementById('content').innerHTML=`<div id="bc-list"><div class="empty"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;opacity:.5"></i></div></div>`;
+  try{
+    const d=await api('/broadcasts');
+    if(!d.broadcasts||!d.broadcasts.length){document.getElementById('bc-list').innerHTML=`<div class="empty"><i class="fas fa-bullhorn"></i><p>No broadcasts yet.</p></div>`;return;}
+    document.getElementById('bc-list').innerHTML=d.broadcasts.map(b=>`
+      <div class="bc-item ${b.pinned?'pinned':''}">
+        ${b.pinned?'<span style="font-size:.7rem;color:var(--green);font-weight:600;margin-bottom:.4rem;display:block"><i class="fas fa-thumbtack"></i> Pinned</span>':''}
+        <div class="bc-msg">${b.message}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:.5rem">
+          <div class="bc-time">${fmtDate(b.createdAt)}</div>
+          ${!b.read?`<button class="btn-xs btn-xs-gray" onclick="markBcRead('${b.id}',this)">Mark Read</button>`:'<span style="font-size:.7rem;color:var(--muted)">Read</span>'}
+        </div>
+      </div>`).join('');
+    animateCards('.bc-item');
+  }catch(e){toast(e.message,'err');}
+}
+
+async function markBcRead(id,btn){
+  try{await api(`/broadcasts/${id}/read`,{method:'PUT'});btn.parentElement.innerHTML='<span style="font-size:.7rem;color:var(--muted)">Read</span>';}
+  catch(e){toast(e.message,'err');}
+}
+
+// ── NOTIFICATIONS ──
+async function viewNotifications(){
+  document.getElementById('content').innerHTML=`
+    <div style="display:flex;justify-content:flex-end;margin-bottom:1rem">
+      <button class="btn-xs btn-xs-gray" onclick="markAllRead()"><i class="fas fa-check-double"></i> Mark All Read</button>
+    </div>
+    <div id="notif-list"><div class="empty"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;opacity:.5"></i></div></div>`;
+  try{
+    const d=await api('/notifications');
+    if(!d.notifications||!d.notifications.length){document.getElementById('notif-list').innerHTML=`<div class="empty"><i class="fas fa-bell-slash"></i><p>No notifications.</p></div>`;return;}
+    document.getElementById('notif-list').innerHTML=d.notifications.map(n=>`
+      <div class="notif-item ${n.read?'':'unread'}">
+        <div class="notif-icon"><i class="fas fa-${n.type==='share'?'share-alt':n.type==='message'?'comment':n.type==='broadcast'?'bullhorn':'check-circle'}"></i></div>
+        <div style="flex:1"><div class="notif-msg">${n.message}</div><div class="notif-time">${fmtDate(n.createdAt)}</div></div>
+        ${!n.read?`<button class="btn-xs btn-xs-gray" onclick="markNotifRead('${n.id}',this)">Read</button>`:''}
+      </div>`).join('');
+    animateCards('.notif-item');
+    refreshBadge();
+  }catch(e){toast(e.message,'err');}
+}
+
+async function markNotifRead(id,btn){
+  try{await api(`/notifications/${id}/read`,{method:'PUT'});btn.closest('.notif-item').classList.remove('unread');btn.remove();refreshBadge();}
+  catch(e){toast(e.message,'err');}
+}
+async function markAllRead(){
+  try{await api('/notifications/read-all',{method:'PUT'});toast('All marked as read');viewNotifications();}
+  catch(e){toast(e.message,'err');}
+}
+
+// ── SETTINGS ──
+async function viewSettings(){
+  document.getElementById('content').innerHTML=`
+    <div class="settings-card">
+      <div style="text-align:center;margin-bottom:1.5rem">
+        <img src="<%= user.profilePicture %>" id="prof-preview" class="prof-preview"
+             onerror="this.src='/assets/images/default-avatar.png'">
+      </div>
+      <form id="settings-form">
+        <div class="form-group"><label class="form-label">Username</label>
+          <input type="text" class="form-input" id="s-name" value="<%= user.username %>"></div>
+        <div class="form-group"><label class="form-label">Email</label>
+          <input type="email" class="form-input" id="s-email" value="<%= user.email %>"></div>
+        <div class="form-group"><label class="form-label">Profile Picture</label>
+          <input type="file" class="form-input" id="s-pic" accept="image/*" onchange="previewPic(this)"></div>
+        <hr style="border-color:var(--border);margin:1rem 0">
+        <div style="font-size:.75rem;color:var(--muted);margin-bottom:.75rem">Change Password (leave blank to keep current)</div>
+        <div class="form-group"><label class="form-label">Current Password</label>
+          <input type="password" class="form-input" id="s-cur"></div>
+        <div class="form-group"><label class="form-label">New Password</label>
+          <input type="password" class="form-input" id="s-new"></div>
+        <button type="submit" class="btn-save"><i class="fas fa-save"></i> Save Changes</button>
+      </form>
+    </div>`;
+  document.getElementById('settings-form').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const fd=new FormData();
+    fd.append('username',document.getElementById('s-name').value);
+    fd.append('email',document.getElementById('s-email').value);
+    const pic=document.getElementById('s-pic').files[0];if(pic)fd.append('profilePicture',pic);
+    const cur=document.getElementById('s-cur').value,nw=document.getElementById('s-new').value;
+    if(cur&&nw){fd.append('currentPassword',cur);fd.append('newPassword',nw);}
+    try{
+      const r=await fetch('/api/users/profile',{method:'PUT',body:fd,credentials:'include'});
+      let data;try{data=await r.json();}catch(err){throw new Error('Server error');}
+      if(!r.ok)throw new Error(data.message);
+      toast('Profile updated');
+      if(data.user){
+        document.getElementById('sb-name').textContent=data.user.username;
+        if(data.user.profilePicture){document.getElementById('sb-avatar').src=data.user.profilePicture;document.getElementById('prof-preview').src=data.user.profilePicture;}
+      }
+    }catch(err){toast(err.message,'err');}
+  });
+}
+function previewPic(input){
+  if(input.files&&input.files[0]){const r=new FileReader();r.onload=e=>document.getElementById('prof-preview').src=e.target.result;r.readAsDataURL(input.files[0]);}
+}
+
+// ── UPLOAD MODAL ──
+function openUploadModal(){
+  openModal(`<div class="modal-hdr"><h3><i class="fas fa-upload" style="color:var(--green)"></i> Upload File</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+    <form id="upload-form">
+      <div class="form-group"><label class="form-label">File</label><input type="file" class="form-input" id="up-file" required></div>
+      <div class="form-group"><label class="form-label">Category</label>
+        <select class="form-select" id="up-cat">
+          <option value="pdf">PDF</option><option value="book">Book</option>
+          <option value="note">Note</option><option value="sheet">Sheet</option><option value="other">Other</option>
+        </select></div>
+      <div class="form-group"><label class="form-label">Description (optional)</label>
+        <textarea class="form-textarea" id="up-desc" rows="2" placeholder="Brief description..."></textarea></div>
+      <div class="modal-footer">
+        <button type="button" class="btn-xs btn-xs-gray" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn-upload" id="up-btn"><i class="fas fa-upload"></i> Upload</button>
+      </div>
+    </form>`);
+  document.getElementById('upload-form').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const file=document.getElementById('up-file').files[0];
+    if(!file)return toast('Select a file','err');
+    const fd=new FormData();
+    fd.append('file',file);fd.append('category',document.getElementById('up-cat').value);
+    fd.append('description',document.getElementById('up-desc').value);fd.append('isPersonal','true');
+    const btn=document.getElementById('up-btn');
+    btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Uploading...';btn.disabled=true;
+    try{
+      const r=await fetch('/api/files/upload',{method:'POST',body:fd,credentials:'include'});
+      let data;try{data=await r.json();}catch(err){throw new Error('Server error');}
+      if(!r.ok)throw new Error(data.message);
+      closeModal();toast(data.message||'File uploaded');
+      if(currentView==='myfiles')viewMyFiles();
+    }catch(err){toast(err.message,'err');btn.innerHTML='<i class="fas fa-upload"></i> Upload';btn.disabled=false;}
+  });
+}
+
+// ── SHARE MODAL ──
+async function openShareModal(fileId,filename){
+  openModal(`<div class="modal-hdr"><h3><i class="fas fa-share-alt" style="color:var(--green)"></i> Share "${filename}"</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+    <p style="font-size:.8rem;color:var(--muted);margin-bottom:1rem">Select users to share with:</p>
+    <div id="share-list"><div style="color:var(--muted);font-size:.82rem">Loading users...</div></div>
+    <div class="modal-footer">
+      <button class="btn-xs btn-xs-gray" onclick="closeModal()">Cancel</button>
+      <button class="btn-upload" onclick="doShare('${fileId}')"><i class="fas fa-share-alt"></i> Share</button>
+    </div>`);
+  try{
+    const d=await api('/users/approved');
+    if(!d.users||!d.users.length){document.getElementById('share-list').innerHTML='<p style="color:var(--muted);font-size:.82rem">No approved users to share with.</p>';return;}
+    document.getElementById('share-list').innerHTML=d.users.map(u=>`
+      <label style="display:flex;align-items:center;gap:.75rem;padding:.65rem;margin-bottom:.4rem;background:rgba(0,255,136,.04);border:1px solid var(--border);border-radius:7px;cursor:pointer">
+        <input type="checkbox" value="${u.id}" style="accent-color:var(--green);width:15px;height:15px">
+        <img src="${u.profilePicture||'/assets/images/default-avatar.png'}" style="width:30px;height:30px;border-radius:50%;object-fit:cover" onerror="this.src='/assets/images/default-avatar.png'">
+        <div><div style="font-size:.82rem;font-weight:600">${u.username}</div><div style="font-size:.7rem;color:var(--muted)">${u.email}</div></div>
+      </label>`).join('');
+  }catch(e){toast(e.message,'err');}
+}
+async function doShare(fileId){
+  const checked=[...document.querySelectorAll('#share-list input:checked')].map(i=>i.value);
+  if(!checked.length)return toast('Select at least one user','err');
+  try{await api('/files/share',{method:'POST',body:JSON.stringify({fileId,userIds:checked})});closeModal();toast('File shared successfully');}
+  catch(e){toast(e.message,'err');}
+}
+
+// ── PDF PREVIEW ──
+function previewFile(fileId,filename,mimetype){
+  if(mimetype&&mimetype.includes('pdf')){
+    openModal(`<div class="modal-hdr"><h3><i class="fas fa-file-pdf" style="color:var(--green)"></i> ${filename}</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+      <div style="text-align:center;padding:1rem">
+        <iframe src="/api/files/preview/${fileId}" style="width:100%;height:70vh;border:none;border-radius:8px;background:#fff"></iframe>
+      </div>`);
+  } else {
+    openModal(`<div class="modal-hdr"><h3><i class="fas fa-file" style="color:var(--green)"></i> ${filename}</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+      <div style="text-align:center;padding:1rem">
+        <img src="/api/files/preview/${fileId}" style="max-width:100%;max-height:70vh;border-radius:8px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <div style="display:none;color:var(--muted);padding:2rem"><i class="fas fa-file" style="font-size:3rem;margin-bottom:1rem;display:block;opacity:.4"></i>Preview not available</div>
+      </div>`);
+  }
+}
+
+// ── SEARCH ──
+let searchTimeout;
+document.getElementById('search-input').addEventListener('input',function(){
+  clearTimeout(searchTimeout);
+  const q=this.value.trim();
+  if(q.length<2){document.getElementById('search-results').style.display='none';return;}
+  searchTimeout=setTimeout(()=>doSearch(q),300);
+});
+document.addEventListener('click',e=>{if(!e.target.closest('.search-bar'))document.getElementById('search-results').style.display='none';});
+
+async function doSearch(q){
+  try{
+    const d=await api('/files?personal=true');
+    const results=(d.files||[]).filter(f=>(f.filename||'').toLowerCase().includes(q.toLowerCase()));
+    const sr=document.getElementById('search-results');
+    if(!results.length){sr.innerHTML='<div class="sr-item" style="color:var(--muted)">No results found</div>';sr.style.display='block';return;}
+    sr.innerHTML=results.slice(0,8).map(f=>`<div class="sr-item" onclick="previewFile('${f.id}','${(f.filename||'').replace(/'/g,"\\'")}','${f.mimetype||''}');document.getElementById('search-results').style.display='none'">
+      <i class="fas fa-file" style="color:var(--green);margin-right:.5rem;font-size:.8rem"></i>${f.filename}
+      <span style="color:var(--muted);font-size:.7rem;margin-left:.5rem">${fmtSize(f.size)}</span>
+    </div>`).join('');
+    sr.style.display='block';
+  }catch(e){}
+}
+
+// ── SOCKET.IO ──
+let socket = null;
+try{
+  const tokenCookie = document.cookie.split('; ').find(r=>r.startsWith('token='));
+  const token = tokenCookie ? tokenCookie.split('=')[1] : '';
+  
+  socket = io({
+    auth: { token },
+    reconnection: true,
+    reconnectionDelay: 1000,
+    reconnectionAttempts: 5
+  });
+
+  socket.on('connect', () => {
+    console.log('Socket connected:', socket.id);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Socket disconnected');
+  });
+
+  // ── INSTANT MESSAGE DELIVERY ──
+  socket.on('new_message', (data) => {
+    // Show toast notification
+    toast(`💬 New message from ${data.fromUsername}`);
+    refreshBadge();
+    
+    // If messages view is open and chat is with this sender, append instantly
+    if (currentView === 'messages' && activeChatUser && activeChatUser.id === data.from) {
+      appendMessage(data.text, false, data.createdAt);
+      // Mark as read since user is viewing
+      api(`/messages/${data.id}/read`, {method:'PUT'}).catch(()=>{});
+    }
+    
+    // Update conversation list preview if visible
+    const chatItem = document.querySelector(`.chat-item[data-uid="${data.from}"]`);
+    if (chatItem) {
+      const preview = chatItem.querySelector('.chat-item-preview');
+      if (preview) preview.textContent = data.text;
+    }
+  });
+
+  // Confirmation of sent message
+  socket.on('message_sent', (data) => {
+    // Message confirmed by server — already shown optimistically
+  });
+
+  socket.on('file_shared', (data) => {
+    toast('📤 A file was shared with you');
+    refreshBadge();
+    if (currentView === 'shared') viewShared();
+  });
+
+  socket.on('file_approved', (data) => {
+    toast('✅ Your file was approved');
+    if (currentView === 'myfiles') viewMyFiles();
+  });
+
+  socket.on('new_broadcast', (data) => {
+    toast('📢 New broadcast announcement');
+    refreshBadge();
+    if (currentView === 'broadcasts') viewBroadcasts();
+  });
+
+  socket.on('user_typing', (data) => {
+    if (activeChatUser && activeChatUser.id === data.from) {
+      const hdr = document.getElementById('chat-hdr-status');
+      if (hdr) {
+        hdr.textContent = data.isTyping ? 'typing...' : '';
+      }
+    }
+  });
+
+} catch(e) {
+  console.warn('Socket.IO not available:', e.message);
+}
+
+// ── INIT ──
+viewMyFiles();
+refreshBadge();
+setInterval(refreshBadge,30000);
+</script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pending Approval — CloudOS</title>
+  <link rel="icon" href="/assets/images/favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:#050d0a;color:#e2e8f0;
+      min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+    .card{background:rgba(10,26,18,0.8);border:1px solid rgba(0,255,136,0.2);border-radius:14px;
+      padding:3rem;max-width:480px;width:100%;text-align:center;backdrop-filter:blur(10px)}
+    .icon{font-size:3.5rem;color:#f59e0b;margin-bottom:1.5rem}
+    h1{font-size:1.6rem;font-weight:700;margin-bottom:1rem}
+    p{color:#9ca3af;font-size:.9rem;line-height:1.7;margin-bottom:1.5rem}
+    .badge{display:inline-block;padding:.4rem 1rem;background:rgba(245,158,11,.12);
+      border:1px solid rgba(245,158,11,.3);border-radius:20px;color:#f59e0b;font-size:.8rem;margin-bottom:1.5rem}
+    .btn{display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 1.5rem;
+      background:transparent;border:1.5px solid rgba(0,255,136,.4);border-radius:8px;
+      color:#00ff88;font-size:.9rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s}
+    .btn:hover{background:rgba(0,255,136,.1);box-shadow:0 0 15px rgba(0,255,136,.25)}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon"><i class="fas fa-hourglass-half"></i></div>
+    <div class="badge"><i class="fas fa-clock"></i> Pending Approval</div>
+    <h1>Account Under Review</h1>
+    <p>Your account has been registered successfully. The administrator will review and approve your account shortly. You'll be able to access the dashboard once approved.</p>
+    <p style="font-size:.8rem;color:#6b7280">Contact: mdhasibulhasan0210@gmail.com</p>
+    <br>
+    <a href="/" class="btn"><i class="fas fa-home"></i> Back to Home</a>
+    &nbsp;
+    <button class="btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+  </div>
+  <script>
+    async function logout(){
+      await fetch('/api/auth/logout',{method:'POST',credentials:'include'});
+      window.location.href='/';
+    }
+  </script>
+</body>
+</html>

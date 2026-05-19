@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign In — CloudOS</title>
+<link rel="icon" href="/assets/images/favicon.png" type="image/png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--green:#00ff88;--bg:#050d0a;--bg2:#0a1a12;--border:rgba(0,255,136,0.18);--text:#e2e8f0;--muted:#6b7280}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;align-items:center;justify-content:center}
+#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+/* CARD */
+.auth-wrap{
+  position:relative;z-index:1;width:100%;max-width:420px;padding:1rem;
+  animation:cardIn .5s ease-out;
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(30px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.auth-card{
+  background:rgba(10,26,18,.82);backdrop-filter:blur(20px);
+  border:1px solid var(--border);border-radius:16px;padding:2.2rem 2rem;
+  box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 40px rgba(0,255,136,.06);
+}
+
+/* LOGO */
+.auth-logo{
+  display:flex;align-items:center;justify-content:center;gap:.55rem;
+  color:var(--green);font-weight:700;font-size:1.1rem;margin-bottom:1.8rem;
+  text-decoration:none;
+}
+.auth-logo i{font-size:1.2rem}
+
+/* TABS */
+.tabs{display:flex;gap:.5rem;margin-bottom:1.8rem;background:rgba(0,0,0,.3);border-radius:9px;padding:.3rem}
+.tab{
+  flex:1;padding:.55rem;border-radius:7px;border:none;background:none;
+  color:var(--muted);font-size:.85rem;font-weight:600;cursor:pointer;
+  transition:background .2s,color .2s;
+}
+.tab.active{background:rgba(0,255,136,.12);color:var(--green);border:1px solid rgba(0,255,136,.25)}
+
+/* FORM */
+.form-section{display:none}
+.form-section.active{display:block;animation:fadeUp .35s ease-out}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+.form-title{font-size:1.2rem;font-weight:700;margin-bottom:.3rem}
+.form-sub{font-size:.8rem;color:var(--muted);margin-bottom:1.4rem}
+
+.fg{margin-bottom:1rem;position:relative}
+.fg label{display:block;font-size:.75rem;color:var(--muted);font-weight:600;margin-bottom:.35rem}
+.fg .input-wrap{position:relative}
+.fg .input-wrap i.icon{
+  position:absolute;left:.85rem;top:50%;transform:translateY(-50%);
+  color:var(--muted);font-size:.82rem;pointer-events:none;transition:color .2s;
+}
+.fg input{
+  width:100%;padding:.68rem .9rem .68rem 2.4rem;
+  background:rgba(0,255,136,.04);border:1px solid rgba(0,255,136,.18);
+  border-radius:8px;color:var(--text);font-size:.88rem;font-family:inherit;
+  transition:border-color .2s,box-shadow .2s,background .2s;
+}
+.fg input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(0,255,136,.1);background:rgba(0,255,136,.06)}
+.fg input:focus+i.icon,.fg .input-wrap:focus-within i.icon{color:var(--green)}
+.toggle-pw{
+  position:absolute;right:.85rem;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:var(--muted);cursor:pointer;font-size:.82rem;
+  transition:color .2s;padding:0;
+}
+.toggle-pw:hover{color:var(--green)}
+.field-err{font-size:.72rem;color:#ef4444;margin-top:.3rem;display:none}
+.field-err.show{display:block}
+
+.btn-submit{
+  width:100%;padding:.78rem;background:transparent;
+  border:1.5px solid var(--green);border-radius:8px;
+  color:var(--green);font-weight:700;font-size:.9rem;letter-spacing:.05em;
+  cursor:pointer;transition:background .2s,box-shadow .2s,transform .15s;
+  display:flex;align-items:center;justify-content:center;gap:.5rem;margin-top:.3rem;
+}
+.btn-submit:hover{background:rgba(0,255,136,.1);box-shadow:0 0 22px rgba(0,255,136,.3);transform:translateY(-1px)}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+.auth-footer{text-align:center;margin-top:1.2rem;font-size:.78rem;color:var(--muted)}
+.auth-footer a{color:var(--green);text-decoration:none}
+.auth-footer a:hover{text-decoration:underline}
+
+.back-link{
+  display:inline-flex;align-items:center;gap:.4rem;
+  color:var(--muted);font-size:.8rem;text-decoration:none;
+  margin-bottom:1.2rem;transition:color .2s;
+}
+.back-link:hover{color:var(--green)}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:1.5rem;right:1.5rem;z-index:999;
+  background:var(--bg2);border:1px solid var(--green);border-radius:10px;
+  padding:.85rem 1.3rem;color:var(--green);font-size:.83rem;
+  transform:translateY(80px);opacity:0;transition:transform .3s,opacity .3s;
+  display:flex;align-items:center;gap:.55rem;max-width:340px;
+}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.err{border-color:#ef4444;color:#ef4444}
+
+/* STRENGTH BAR */
+.strength-bar{height:3px;border-radius:2px;margin-top:.4rem;background:rgba(255,255,255,.08);overflow:hidden}
+.strength-fill{height:100%;border-radius:2px;transition:width .3s,background .3s;width:0}
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+
+<div class="auth-wrap">
+  <a href="/" class="back-link"><i class="fas fa-arrow-left"></i> Back to Home</a>
+
+  <div class="auth-card">
+    <a href="/" class="auth-logo"><i class="fas fa-cloud"></i> CloudOS</a>
+
+    <div class="tabs">
+      <button class="tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
+      <button class="tab" id="tab-signup" onclick="switchTab('signup')">Sign Up</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div class="form-section active" id="form-login">
+      <div class="form-title">Welcome back</div>
+      <div class="form-sub">Sign in to your CloudOS account</div>
+      <form id="login-form" novalidate>
+        <div class="fg">
+          <label>Email Address</label>
+          <div class="input-wrap">
+            <i class="fas fa-envelope icon"></i>
+            <input type="email" id="l-email" placeholder="your@email.com" autocomplete="email">
+          </div>
+          <div class="field-err" id="l-email-err"></div>
+        </div>
+        <div class="fg">
+          <label>Password</label>
+          <div class="input-wrap">
+            <i class="fas fa-lock icon"></i>
+            <input type="password" id="l-pass" placeholder="Your password" autocomplete="current-password">
+            <button type="button" class="toggle-pw" onclick="togglePw('l-pass',this)"><i class="fas fa-eye"></i></button>
+          </div>
+          <div class="field-err" id="l-pass-err"></div>
+        </div>
+        <button type="submit" class="btn-submit" id="login-btn">
+          <i class="fas fa-sign-in-alt"></i> SIGN IN
+        </button>
+      </form>
+      <div class="auth-footer">
+        Don't have an account? <a href="#" onclick="switchTab('signup');return false">Sign up</a>
+      </div>
+    </div>
+
+    <!-- SIGNUP -->
+    <div class="form-section" id="form-signup">
+      <div class="form-title">Create account</div>
+      <div class="form-sub">Request access to CloudOS</div>
+      <form id="signup-form" novalidate>
+        <div class="fg">
+          <label>Username</label>
+          <div class="input-wrap">
+            <i class="fas fa-user icon"></i>
+            <input type="text" id="s-name" placeholder="Your name" autocomplete="name">
+          </div>
+          <div class="field-err" id="s-name-err"></div>
+        </div>
+        <div class="fg">
+          <label>Email Address</label>
+          <div class="input-wrap">
+            <i class="fas fa-envelope icon"></i>
+            <input type="email" id="s-email" placeholder="your@email.com" autocomplete="email">
+          </div>
+          <div class="field-err" id="s-email-err"></div>
+        </div>
+        <div class="fg">
+          <label>Password</label>
+          <div class="input-wrap">
+            <i class="fas fa-lock icon"></i>
+            <input type="password" id="s-pass" placeholder="Min. 8 characters" autocomplete="new-password" oninput="checkStrength(this.value)">
+            <button type="button" class="toggle-pw" onclick="togglePw('s-pass',this)"><i class="fas fa-eye"></i></button>
+          </div>
+          <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
+          <div class="field-err" id="s-pass-err"></div>
+        </div>
+        <button type="submit" class="btn-submit" id="signup-btn">
+          <i class="fas fa-user-plus"></i> REQUEST ACCESS
+        </button>
+      </form>
+      <div class="auth-footer">
+        Already have an account? <a href="#" onclick="switchTab('login');return false">Sign in</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// Space canvas
+(function(){
+  const c=document.getElementById('bg-canvas'),ctx=c.getContext('2d');
+  let W,H,pts=[];
+  function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight}
+  function P(){this.reset(true)}
+  P.prototype.reset=function(init){
+    this.x=Math.random()*W;this.y=init?Math.random()*H:H+8;
+    this.r=Math.random()<.1?Math.random()*3+2:Math.random()*1.5+.4;
+    this.sq=Math.random()<.09;this.sp=Math.random()*.22+.04;
+    this.a=Math.random()*.5+.1;this.tw=Math.random()*Math.PI*2;this.ts=Math.random()*.025+.008;
+  };
+  P.prototype.draw=function(){
+    const a=this.a*(.55+.45*Math.sin(this.tw));
+    ctx.globalAlpha=a;ctx.fillStyle='#00ff88';
+    if(this.sq)ctx.fillRect(this.x-this.r,this.y-this.r,this.r*2,this.r*2);
+    else{ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,Math.PI*2);ctx.fill();}
+    ctx.globalAlpha=1;
+  };
+  P.prototype.update=function(){this.y-=this.sp;this.tw+=this.ts;if(this.y+this.r<0)this.reset(false);};
+  function init(){resize();pts=Array.from({length:140},()=>new P())}
+  function loop(){ctx.clearRect(0,0,W,H);pts.forEach(p=>{p.update();p.draw();});requestAnimationFrame(loop)}
+  window.addEventListener('resize',resize);init();loop();
+})();
+
+function toast(msg,type='ok'){
+  const t=document.getElementById('toast');
+  t.className='toast'+(type==='err'?' err':'');
+  t.innerHTML=(type==='err'?'<i class="fas fa-times-circle"></i>':'<i class="fas fa-check-circle"></i>')+' '+msg;
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.form-section').forEach(f=>f.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('form-'+tab).classList.add('active');
+}
+
+function togglePw(id,btn){
+  const inp=document.getElementById(id);
+  const show=inp.type==='password';
+  inp.type=show?'text':'password';
+  btn.querySelector('i').className='fas fa-'+(show?'eye-slash':'eye');
+}
+
+function showErr(id,msg){const el=document.getElementById(id);el.textContent=msg;el.classList.add('show')}
+function clearErr(id){const el=document.getElementById(id);el.textContent='';el.classList.remove('show')}
+
+function checkStrength(pw){
+  const fill=document.getElementById('strength-fill');
+  let score=0;
+  if(pw.length>=8)score++;if(pw.length>=12)score++;
+  if(/[A-Z]/.test(pw))score++;if(/[0-9]/.test(pw))score++;if(/[^A-Za-z0-9]/.test(pw))score++;
+  const pct=[0,20,40,65,85,100][score];
+  const colors=['','#ef4444','#f59e0b','#eab308','#10b981','#00ff88'][score];
+  fill.style.width=pct+'%';fill.style.background=colors;
+}
+
+async function apiPost(url,data){
+  const r=await fetch(url,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  let d;
+  try{d=await r.json();}catch(e){throw new Error('Server error ('+r.status+'). Please try again.')}
+  if(!r.ok)throw new Error(d.message||'Request failed');
+  return d;
+}
+
+// LOGIN
+document.getElementById('login-form').addEventListener('submit',async e=>{
+  e.preventDefault();
+  clearErr('l-email-err');clearErr('l-pass-err');
+  const email=document.getElementById('l-email').value.trim();
+  const pass=document.getElementById('l-pass').value;
+  let ok=true;
+  if(!email){showErr('l-email-err','Email is required');ok=false;}
+  else if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showErr('l-email-err','Enter a valid email');ok=false;}
+  if(!pass){showErr('l-pass-err','Password is required');ok=false;}
+  if(!ok)return;
+  const btn=document.getElementById('login-btn');
+  btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Signing in...';btn.disabled=true;
+  try{
+    const d=await apiPost('/api/auth/login',{email,password:pass});
+    toast('Welcome back, '+d.user.username+'!');
+    setTimeout(()=>{
+      if(d.user.role==='admin')window.location.href='/admin';
+      else window.location.href='/dashboard';
+    },800);
+  }catch(err){
+    toast(err.message,'err');
+    btn.innerHTML='<i class="fas fa-sign-in-alt"></i> SIGN IN';btn.disabled=false;
+  }
+});
+
+// SIGNUP
+document.getElementById('signup-form').addEventListener('submit',async e=>{
+  e.preventDefault();
+  clearErr('s-name-err');clearErr('s-email-err');clearErr('s-pass-err');
+  const name=document.getElementById('s-name').value.trim();
+  const email=document.getElementById('s-email').value.trim();
+  const pass=document.getElementById('s-pass').value;
+  let ok=true;
+  if(!name||name.length<3){showErr('s-name-err','Username must be at least 3 characters');ok=false;}
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showErr('s-email-err','Enter a valid email');ok=false;}
+  if(!pass||pass.length<8){showErr('s-pass-err','Password must be at least 8 characters');ok=false;}
+  if(!ok)return;
+  const btn=document.getElementById('signup-btn');
+  btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Creating account...';btn.disabled=true;
+  try{
+    await apiPost('/api/auth/signup',{username:name,email,password:pass});
+    toast('Account created! Waiting for admin approval.');
+    setTimeout(()=>switchTab('login'),2000);
+    document.getElementById('signup-form').reset();
+    document.getElementById('strength-fill').style.width='0';
+  }catch(err){
+    toast(err.message,'err');
+  }finally{
+    btn.innerHTML='<i class="fas fa-user-plus"></i> REQUEST ACCESS';btn.disabled=false;
+  }
+});
+
+// Auto-switch from URL param
+if(new URLSearchParams(location.search).get('mode')==='signup')switchTab('signup');
+</script>
+</body>
+</html>

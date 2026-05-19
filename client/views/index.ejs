@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MD.Hasibul Hasan — Personal Cloud OS</title>
+<link rel="icon" href="/assets/images/favicon.png" type="image/png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--green:#00ff88;--bg:#050d0a;--border:rgba(0,255,136,0.18);--text:#e2e8f0;--muted:#6b7280}
+html,body{height:100%;overflow-x:hidden}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text)}
+#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+/* NAV */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 2.5rem;height:56px;
+  background:rgba(5,13,10,0.88);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+  transform:translateY(-100%);animation:navSlide .6s .1s ease forwards;
+}
+@keyframes navSlide{to{transform:translateY(0)}}
+.nav-logo{display:flex;align-items:center;gap:.55rem;font-weight:700;font-size:1.05rem;color:var(--green);text-decoration:none}
+.nav-links{display:flex;align-items:center;gap:2rem}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:.9rem;transition:color .2s}
+.nav-links a:hover{color:var(--green)}
+.btn-signin{
+  padding:.42rem 1.3rem;border:1.5px solid var(--green);border-radius:6px;
+  color:var(--green)!important;font-weight:600;font-size:.85rem;letter-spacing:.05em;
+  transition:background .2s,box-shadow .2s!important;
+}
+.btn-signin:hover{background:rgba(0,255,136,.1)!important;box-shadow:0 0 14px rgba(0,255,136,.35)}
+
+/* HERO */
+.hero{
+  position:relative;z-index:1;min-height:100vh;
+  display:flex;align-items:center;
+  padding:80px 5vw 2rem;gap:clamp(2rem,5vw,5rem);
+  max-width:1200px;margin:0 auto;
+}
+
+/* Profile */
+.profile-wrap{
+  flex-shrink:0;position:relative;
+  width:clamp(140px,18vw,200px);height:clamp(140px,18vw,200px);
+  opacity:0;animation:fadeLeft .8s .4s ease forwards;
+}
+@keyframes fadeLeft{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:translateX(0)}}
+.ring-outer{
+  position:absolute;inset:-12px;border-radius:50%;
+  border:2px solid rgba(0,255,136,.5);
+  animation:spin 20s linear infinite;
+}
+.ring-outer::before{
+  content:'';position:absolute;inset:-8px;border-radius:50%;
+  border:1px solid rgba(0,255,136,.2);
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.profile-img{
+  position:absolute;inset:0;width:100%;height:100%;
+  border-radius:50%;object-fit:cover;
+  border:3px solid var(--green);
+  box-shadow:0 0 30px rgba(0,255,136,.45),0 0 60px rgba(0,255,136,.15);
+  animation:floatImg 4s ease-in-out infinite;
+}
+@keyframes floatImg{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.online-badge{
+  position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);
+  background:rgba(5,13,10,.95);border:1px solid var(--green);
+  border-radius:20px;padding:.22rem .7rem;font-size:.7rem;color:var(--green);
+  white-space:nowrap;z-index:2;
+}
+.dot{display:inline-block;width:6px;height:6px;background:var(--green);border-radius:50%;margin-right:4px;animation:blink 1.5s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* Text */
+.hero-text{flex:1;min-width:0}
+.label-pill{
+  display:inline-block;padding:.32rem .9rem;
+  border:1px solid var(--green);border-radius:20px;
+  color:var(--green);font-size:.72rem;font-weight:600;letter-spacing:.12em;
+  margin-bottom:1.1rem;background:rgba(0,255,136,.06);
+  opacity:0;animation:fadeUp .6s .5s ease forwards;
+}
+.hero-name{
+  font-size:clamp(2rem,5vw,3.6rem);font-weight:800;line-height:1.05;margin-bottom:.7rem;
+  background:linear-gradient(90deg,#00ff88 0%,#ff4d6d 50%,#00ff88 100%);
+  background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;animation:shimmer 4s linear infinite,fadeUp .7s .6s ease both;
+}
+@keyframes shimmer{to{background-position:200% center}}
+.hero-sub{color:var(--muted);font-size:.92rem;margin-bottom:.55rem;opacity:0;animation:fadeUp .6s .7s ease forwards}
+.hero-bio{color:#9ca3af;font-size:.88rem;line-height:1.65;margin-bottom:1.6rem;opacity:0;animation:fadeUp .6s .8s ease forwards}
+.pills{display:flex;flex-wrap:wrap;gap:.55rem;margin-bottom:1.8rem;opacity:0;animation:fadeUp .6s .9s ease forwards}
+.pill{
+  display:inline-flex;align-items:center;gap:.38rem;padding:.38rem .9rem;
+  background:rgba(0,255,136,.07);border:1px solid rgba(0,255,136,.28);
+  border-radius:20px;font-size:.78rem;color:var(--green);
+  transition:background .2s,box-shadow .2s,transform .2s;cursor:default;
+}
+.pill:hover{background:rgba(0,255,136,.14);box-shadow:0 0 12px rgba(0,255,136,.22);transform:translateY(-2px)}
+.hero-btns{display:flex;gap:.9rem;flex-wrap:wrap;opacity:0;animation:fadeUp .6s 1s ease forwards}
+.btn-main{
+  display:inline-flex;align-items:center;gap:.5rem;padding:.82rem 1.9rem;
+  background:transparent;border:2px solid var(--green);border-radius:8px;
+  color:var(--green);font-weight:700;font-size:.92rem;letter-spacing:.04em;
+  text-decoration:none;transition:background .25s,box-shadow .25s,transform .2s;
+  box-shadow:0 0 14px rgba(0,255,136,.18);
+}
+.btn-main:hover{background:rgba(0,255,136,.11);box-shadow:0 0 28px rgba(0,255,136,.38);transform:translateY(-2px)}
+.btn-ghost{
+  display:inline-flex;align-items:center;gap:.5rem;padding:.82rem 1.9rem;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);
+  border-radius:8px;color:#9ca3af;font-size:.92rem;text-decoration:none;
+  transition:background .25s,border-color .25s,color .25s,transform .2s;
+}
+.btn-ghost:hover{background:rgba(255,255,255,.08);border-color:rgba(0,255,136,.3);color:var(--green);transform:translateY(-2px)}
+
+/* Floating geo shapes */
+.geo{position:fixed;pointer-events:none;opacity:.14;z-index:0}
+.geo svg{stroke:var(--green);fill:none;stroke-width:1.2}
+.geo:nth-child(1){top:18%;right:12%;animation:geoFloat 14s ease-in-out infinite}
+.geo:nth-child(2){top:58%;right:6%;animation:geoFloat 11s 3s ease-in-out infinite}
+.geo:nth-child(3){top:38%;right:28%;animation:geoFloat 16s 6s ease-in-out infinite}
+@keyframes geoFloat{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-22px) rotate(18deg)}}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+
+@media(max-width:768px){
+  .hero{flex-direction:column;align-items:center;text-align:center;padding-top:90px;gap:1.8rem}
+  .pills,.hero-btns{justify-content:center}
+  nav{padding:0 1.2rem}
+  .nav-links{gap:1rem}
+}
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+
+<div class="geo"><svg width="58" height="58" viewBox="0 0 58 58"><polygon points="29,4 54,50 4,50"/></svg></div>
+<div class="geo"><svg width="48" height="48" viewBox="0 0 48 48"><polygon points="24,3 45,14 45,34 24,45 3,34 3,14"/></svg></div>
+<div class="geo"><svg width="42" height="42" viewBox="0 0 42 42"><rect x="7" y="7" width="28" height="28" transform="rotate(15 21 21)"/></svg></div>
+
+<nav>
+  <a href="/" class="nav-logo"><i class="fas fa-cloud"></i> CloudOS</a>
+  <div class="nav-links">
+    <a href="/about">About</a>
+    <a href="/contact">Contact</a>
+    <a href="/auth" class="btn-signin">SIGN IN</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="profile-wrap">
+    <div class="ring-outer"></div>
+    <img src="/assets/images/profile.png" alt="MD.Hasibul Hasan" class="profile-img"
+         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMDAiIGN5PSIxMDAiIHI9IjEwMCIgZmlsbD0iIzA2NGUzYiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iNjAiIGZpbGw9IiMwMGZmODgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiPk1IPC90ZXh0Pjwvc3ZnPg=='">
+    <div class="online-badge"><span class="dot"></span>Online</div>
+  </div>
+
+  <div class="hero-text">
+    <div class="label-pill">PERSONAL CLOUD OS</div>
+    <h1 class="hero-name">MD.Hasibul Hasan</h1>
+    <p class="hero-sub">Personal Cloud &bull; Digital Workspace &bull; Private Archive</p>
+    <p class="hero-bio"><%= bio %></p>
+    <div class="pills">
+      <span class="pill"><i class="fas fa-folder"></i> Organized Archive</span>
+      <span class="pill"><i class="fas fa-shield-alt"></i> Secure Storage</span>
+      <span class="pill"><i class="fas fa-bolt"></i> Instant Preview</span>
+    </div>
+    <div class="hero-btns">
+      <a href="/auth" class="btn-main"><i class="fas fa-sign-in-alt"></i> SIGN IN</a>
+      <a href="/auth?mode=signup" class="btn-ghost"><i class="fas fa-user-plus"></i> Request Access</a>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  const c=document.getElementById('bg-canvas'),ctx=c.getContext('2d');
+  let W,H,pts=[];
+  function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight}
+  function P(){this.reset(true)}
+  P.prototype.reset=function(init){
+    this.x=Math.random()*W;this.y=init?Math.random()*H:H+8;
+    this.r=Math.random()<.1?Math.random()*3+2:Math.random()*1.5+.4;
+    this.sq=Math.random()<.09;this.sp=Math.random()*.22+.04;
+    this.a=Math.random()*.55+.12;this.tw=Math.random()*Math.PI*2;this.ts=Math.random()*.025+.008;
+  };
+  P.prototype.draw=function(){
+    const a=this.a*(.55+.45*Math.sin(this.tw));
+    ctx.globalAlpha=a;ctx.fillStyle='#00ff88';
+    if(this.sq)ctx.fillRect(this.x-this.r,this.y-this.r,this.r*2,this.r*2);
+    else{ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,Math.PI*2);ctx.fill();}
+    ctx.globalAlpha=1;
+  };
+  P.prototype.update=function(){this.y-=this.sp;this.tw+=this.ts;if(this.y+this.r<0)this.reset(false);};
+  function init(){resize();pts=Array.from({length:180},()=>new P())}
+  function loop(){ctx.clearRect(0,0,W,H);pts.forEach(p=>{p.update();p.draw();});requestAnimationFrame(loop)}
+  window.addEventListener('resize',resize);init();loop();
+})();
+</script>
+</body>
+</html>

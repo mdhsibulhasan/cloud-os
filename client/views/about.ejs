@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About — MD.Hasibul Hasan</title>
+  <link rel="icon" href="/assets/images/favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green: #00ff88;
+      --green-dim: #10b981;
+      --bg: #050d0a;
+      --bg2: #0a1a12;
+      --border: rgba(0,255,136,0.18);
+      --text: #e2e8f0;
+      --muted: #6b7280;
+    }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+
+    #space-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2.5rem; height: 56px;
+      background: rgba(5,13,10,0.85); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo { display: flex; align-items: center; gap: .6rem; font-weight: 700; font-size: 1.05rem; color: var(--green); text-decoration: none; }
+    .nav-links { display: flex; align-items: center; gap: 2rem; }
+    .nav-links a { color: var(--muted); text-decoration: none; font-size: .9rem; transition: color .2s; }
+    .nav-links a:hover { color: var(--green); }
+    .btn-signin { padding: .45rem 1.3rem; border: 1.5px solid var(--green); border-radius: 6px; color: var(--green) !important; font-weight: 600; font-size: .85rem; letter-spacing: .05em; transition: background .2s, box-shadow .2s !important; }
+    .btn-signin:hover { background: rgba(0,255,136,.1) !important; box-shadow: 0 0 14px rgba(0,255,136,.35); }
+
+    .page { position: relative; z-index: 1; max-width: 820px; margin: 0 auto; padding: 90px 2rem 4rem; }
+
+    /* Profile card */
+    .profile-card {
+      background: rgba(10,26,18,0.7);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      margin-bottom: 3rem;
+      backdrop-filter: blur(10px);
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity .6s ease, transform .6s ease;
+    }
+    .profile-card.visible { opacity: 1; transform: translateY(0); }
+
+    .profile-avatar {
+      width: 100px; height: 100px;
+      border-radius: 50%;
+      border: 3px solid var(--green);
+      object-fit: cover;
+      box-shadow: 0 0 20px rgba(0,255,136,.35);
+      flex-shrink: 0;
+    }
+
+    .profile-info h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: .3rem; }
+    .profile-role { color: var(--green); font-size: .85rem; margin-bottom: .8rem; }
+    .profile-bio { color: #9ca3af; font-size: .9rem; line-height: 1.7; }
+
+    /* Section title */
+    .section-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 2px;
+      background: linear-gradient(90deg, var(--green), transparent);
+      max-width: 80px;
+    }
+
+    /* Timeline */
+    .timeline { position: relative; padding-left: 2rem; }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 8px; top: 0; bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--green), transparent);
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 1.5rem;
+      opacity: 0;
+      transform: translateX(-20px);
+      transition: opacity .5s ease, transform .5s ease;
+    }
+    .timeline-item.visible { opacity: 1; transform: translateX(0); }
+
+    .timeline-dot {
+      position: absolute;
+      left: -2rem;
+      top: 1.2rem;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      border: 2px solid var(--green);
+      background: var(--bg);
+      box-shadow: 0 0 8px rgba(0,255,136,.5);
+    }
+
+    .timeline-card {
+      background: rgba(10,26,18,0.6);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.2rem 1.5rem;
+      backdrop-filter: blur(8px);
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .timeline-card:hover {
+      border-color: var(--green);
+      box-shadow: 0 0 15px rgba(0,255,136,.15);
+    }
+
+    .timeline-year { color: var(--green); font-size: .78rem; font-weight: 600; margin-bottom: .3rem; }
+    .timeline-title { font-weight: 700; font-size: 1rem; margin-bottom: .3rem; }
+    .timeline-desc { color: #9ca3af; font-size: .85rem; line-height: 1.5; }
+
+    /* Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 3rem;
+    }
+
+    .stat-box {
+      background: rgba(10,26,18,0.6);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      text-align: center;
+      backdrop-filter: blur(8px);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity .5s ease, transform .5s ease, border-color .2s, box-shadow .2s;
+    }
+    .stat-box.visible { opacity: 1; transform: translateY(0); }
+    .stat-box:hover { border-color: var(--green); box-shadow: 0 0 15px rgba(0,255,136,.15); }
+
+    .stat-num { font-size: 2rem; font-weight: 800; color: var(--green); }
+    .stat-label { color: var(--muted); font-size: .8rem; margin-top: .3rem; }
+
+    @media (max-width: 600px) {
+      .profile-card { flex-direction: column; text-align: center; }
+      nav { padding: 0 1.2rem; }
+      .nav-links { gap: 1rem; }
+    }
+  </style>
+</head>
+<body>
+<canvas id="space-canvas"></canvas>
+
+<nav>
+  <a href="/" class="nav-logo"><i class="fas fa-cloud"></i> CloudOS</a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/contact">Contact</a>
+    <a href="/auth" class="btn-signin">SIGN IN</a>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- Profile Card -->
+  <div class="profile-card" id="profile-card">
+    <img src="/assets/images/profile.png" alt="MD.Hasibul Hasan" class="profile-avatar"
+         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI1MCIgZmlsbD0iIzA2NGUzYiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMzAiIGZpbGw9IiMwMGZmODgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiPk1IPC90ZXh0Pjwvc3ZnPg=='">
+    <div class="profile-info">
+      <h2>MD.Hasibul Hasan</h2>
+      <div class="profile-role">Personal Cloud OS Administrator</div>
+      <p class="profile-bio"><%= aboutText %></p>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="section-title">System Stats</div>
+  <div class="stats-grid">
+    <div class="stat-box" id="stat1">
+      <div class="stat-num" data-target="100">0</div>
+      <div class="stat-label">Files Archived</div>
+    </div>
+    <div class="stat-box" id="stat2">
+      <div class="stat-num" data-target="15">0</div>
+      <div class="stat-label">Subjects</div>
+    </div>
+    <div class="stat-box" id="stat3">
+      <div class="stat-num" data-target="50">0</div>
+      <div class="stat-label">Chapters</div>
+    </div>
+    <div class="stat-box" id="stat4">
+      <div class="stat-num" data-target="99">0</div>
+      <div class="stat-label">Uptime %</div>
+    </div>
+  </div>
+
+  <!-- Journey Timeline -->
+  <div class="section-title">Journey</div>
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-card">
+        <div class="timeline-year">2024</div>
+        <div class="timeline-title">CloudOS Launch</div>
+        <div class="timeline-desc">Built personal cloud OS for managing academic and personal digital archive.</div>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-card">
+        <div class="timeline-year">2023</div>
+        <div class="timeline-title">Digital Organization</div>
+        <div class="timeline-desc">Started organizing academic subjects, notes, and reference materials digitally.</div>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-card">
+        <div class="timeline-year">2022</div>
+        <div class="timeline-title">Knowledge Building</div>
+        <div class="timeline-desc">Began systematic collection of books, notes, and study materials.</div>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-card">
+        <div class="timeline-year">2021</div>
+        <div class="timeline-title">Learning Journey</div>
+        <div class="timeline-desc">Started the journey of structured learning and personal development.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Space canvas
+(function() {
+  const canvas = document.getElementById('space-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+  function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  function Particle() { this.reset(); }
+  Particle.prototype.reset = function() {
+    this.x = Math.random() * W; this.y = Math.random() * H;
+    this.r = Math.random() < .12 ? Math.random() * 3 + 2 : Math.random() * 1.5 + .5;
+    this.isSquare = Math.random() < .1;
+    this.speed = Math.random() * .25 + .05;
+    this.alpha = Math.random() * .5 + .15;
+    this.twinkle = Math.random() * Math.PI * 2;
+    this.twinkleSpeed = Math.random() * .03 + .01;
+  };
+  Particle.prototype.draw = function() {
+    const a = this.alpha * (.6 + .4 * Math.sin(this.twinkle));
+    ctx.globalAlpha = a; ctx.fillStyle = '#00ff88';
+    if (this.isSquare) ctx.fillRect(this.x - this.r, this.y - this.r, this.r * 2, this.r * 2);
+    else { ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2); ctx.fill(); }
+    ctx.globalAlpha = 1;
+  };
+  Particle.prototype.update = function() {
+    this.y -= this.speed; this.twinkle += this.twinkleSpeed;
+    if (this.y + this.r < 0) { this.y = H + this.r; this.x = Math.random() * W; }
+  };
+  function init() { resize(); particles = Array.from({length: 150}, () => new Particle()); }
+  function loop() { ctx.clearRect(0,0,W,H); particles.forEach(p => { p.update(); p.draw(); }); requestAnimationFrame(loop); }
+  window.addEventListener('resize', resize);
+  init(); loop();
+})();
+
+// Intersection observer for animations
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.15 });
+
+document.querySelectorAll('.profile-card, .timeline-item, .stat-box').forEach(el => observer.observe(el));
+
+// Counter animation
+function animateCounter(el) {
+  const target = parseInt(el.dataset.target);
+  let current = 0;
+  const step = Math.ceil(target / 40);
+  const timer = setInterval(() => {
+    current = Math.min(current + step, target);
+    el.textContent = current + (el.dataset.target === '99' ? '%' : '+');
+    if (current >= target) clearInterval(timer);
+  }, 40);
+}
+
+const statObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      const num = e.target.querySelector('.stat-num');
+      if (num && !num.dataset.animated) { num.dataset.animated = '1'; animateCounter(num); }
+    }
+  });
+}, { threshold: 0.3 });
+
+document.querySelectorAll('.stat-box').forEach(el => statObserver.observe(el));
+</script>
+</body>
+</html>

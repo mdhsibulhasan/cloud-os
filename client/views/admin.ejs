@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel — CloudOS</title>
+  <link rel="icon" href="/assets/images/favicon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --green:#00ff88;--green-dim:#10b981;--green-dark:#064e3b;
+  --bg:#060e0a;--bg2:#0a1a12;--bg3:#0d2018;
+  --sidebar-w:200px;
+  --border:rgba(0,255,136,0.15);
+  --text:#e2e8f0;--muted:#6b7280;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:var(--sidebar-w);min-width:var(--sidebar-w);height:100vh;
+  background:rgba(6,14,10,0.97);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  position:fixed;left:0;top:0;bottom:0;z-index:50;
+  overflow-y:auto;
+}
+.sidebar-header{
+  padding:1rem 1rem 0.5rem;
+  border-bottom:1px solid var(--border);
+  margin-bottom:0.5rem;
+}
+.sidebar-brand{
+  display:flex;align-items:center;gap:0.5rem;
+  color:var(--green);font-weight:700;font-size:0.95rem;
+  text-decoration:none;padding:0.4rem 0;
+}
+.sidebar-brand i{font-size:1rem}
+.sidebar-profile{
+  display:flex;align-items:center;gap:0.7rem;
+  padding:0.8rem 0.5rem;
+  border-bottom:1px solid var(--border);
+  margin-bottom:0.5rem;
+}
+.sidebar-avatar{
+  width:38px;height:38px;border-radius:50%;
+  border:2px solid var(--green);object-fit:cover;
+  box-shadow:0 0 10px rgba(0,255,136,0.3);flex-shrink:0;
+}
+.sidebar-name{font-size:0.8rem;font-weight:700;line-height:1.2}
+.sidebar-role{font-size:0.7rem;color:var(--green)}
+
+.nav-section{padding:0 0.5rem;flex:1}
+.nav-item{
+  display:flex;align-items:center;gap:0.7rem;
+  padding:0.65rem 0.75rem;
+  border-radius:7px;
+  color:var(--muted);font-size:0.82rem;
+  cursor:pointer;text-decoration:none;
+  transition:background .15s,color .15s;
+  margin-bottom:2px;
+  border:none;background:none;width:100%;text-align:left;
+}
+.nav-item i{width:16px;text-align:center;font-size:0.85rem;flex-shrink:0}
+.nav-item:hover{background:rgba(0,255,136,0.08);color:var(--green)}
+.nav-item.active{background:rgba(0,255,136,0.12);color:var(--green);font-weight:600}
+.nav-item.active i{color:var(--green)}
+
+.sidebar-footer{
+  padding:0.75rem 0.5rem;
+  border-top:1px solid var(--border);
+}
+
+/* ── MAIN ── */
+.main{
+  margin-left:var(--sidebar-w);
+  flex:1;height:100vh;overflow-y:auto;
+  background:var(--bg);
+  position:relative;
+}
+#space-canvas{position:fixed;left:var(--sidebar-w);top:0;right:0;bottom:0;z-index:0;pointer-events:none}
+
+.main-inner{position:relative;z-index:1;padding:2rem;transition:opacity 0.35s cubic-bezier(0.16,1,0.3,1), transform 0.35s cubic-bezier(0.16,1,0.3,1)}
+
+/* ── SECTION HEADER ── */
+.section-header{
+  display:flex;align-items:center;gap:0.75rem;
+  margin-bottom:1.8rem;
+}
+.section-header i{color:var(--green);font-size:1.1rem}
+.section-header h2{font-size:1.3rem;font-weight:700}
+
+/* ── STAT CARDS ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem}
+.stat-card{
+  background:rgba(10,26,18,0.7);
+  border:1px solid var(--border);
+  border-radius:10px;padding:1.2rem 1.4rem;
+  backdrop-filter:blur(8px);
+  transition:border-color .2s,box-shadow .2s;
+  cursor:default;
+}
+.stat-card:hover{border-color:var(--green);box-shadow:0 0 18px rgba(0,255,136,0.12)}
+.stat-icon-box{
+  width:38px;height:38px;border-radius:8px;
+  background:rgba(0,255,136,0.12);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--green);font-size:1rem;margin-bottom:0.8rem;
+}
+.stat-num{font-size:1.6rem;font-weight:800;color:var(--text);line-height:1}
+.stat-label{font-size:0.78rem;color:var(--muted);margin-top:0.2rem}
+.stat-sub{font-size:0.72rem;color:var(--muted);margin-top:0.15rem}
+
+/* ── TABLE ── */
+.table-card{
+  background:rgba(10,26,18,0.7);border:1px solid var(--border);
+  border-radius:10px;overflow:hidden;backdrop-filter:blur(8px);
+}
+.table-card-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 1.4rem;border-bottom:1px solid var(--border);
+}
+.table-card-header h3{font-size:0.95rem;font-weight:700}
+table{width:100%;border-collapse:collapse}
+th{padding:0.7rem 1rem;text-align:left;font-size:0.75rem;color:var(--muted);
+   font-weight:600;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.2)}
+td{padding:0.75rem 1rem;font-size:0.82rem;border-bottom:1px solid rgba(0,255,136,0.06)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(0,255,136,0.04)}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;padding:0.2rem 0.6rem;
+  border-radius:20px;font-size:0.7rem;font-weight:600}
+.badge-green{background:rgba(0,255,136,0.12);color:var(--green);border:1px solid rgba(0,255,136,0.3)}
+.badge-yellow{background:rgba(245,158,11,0.12);color:#f59e0b;border:1px solid rgba(245,158,11,0.3)}
+.badge-red{background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.3)}
+.badge-blue{background:rgba(59,130,246,0.12);color:#60a5fa;border:1px solid rgba(59,130,246,0.3)}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:0.4rem;padding:0.5rem 1rem;
+  border-radius:7px;font-size:0.8rem;font-weight:600;cursor:pointer;
+  border:none;transition:all .2s;text-decoration:none}
+.btn-green{background:rgba(0,255,136,0.12);color:var(--green);border:1px solid rgba(0,255,136,0.3)}
+.btn-green:hover{background:rgba(0,255,136,0.22);box-shadow:0 0 12px rgba(0,255,136,0.25)}
+.btn-red{background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.25)}
+.btn-red:hover{background:rgba(239,68,68,0.2)}
+.btn-gray{background:rgba(255,255,255,0.06);color:var(--muted);border:1px solid rgba(255,255,255,0.1)}
+.btn-gray:hover{background:rgba(255,255,255,0.1);color:var(--text)}
+.btn-sm{padding:0.3rem 0.7rem;font-size:0.75rem}
+
+/* ── FORM ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.form-group{margin-bottom:1rem}
+.form-label{display:block;font-size:0.78rem;color:var(--muted);margin-bottom:0.35rem;font-weight:600}
+.form-input,.form-select,.form-textarea{
+  width:100%;padding:0.65rem 0.9rem;
+  background:rgba(0,255,136,0.04);
+  border:1px solid rgba(0,255,136,0.2);
+  border-radius:7px;color:var(--text);font-size:0.85rem;
+  font-family:inherit;transition:border-color .2s,box-shadow .2s;
+}
+.form-input:focus,.form-select:focus,.form-textarea:focus{
+  outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(0,255,136,0.1)}
+.form-textarea{resize:vertical;min-height:90px}
+.form-select option{background:var(--bg2)}
+
+/* ── MODAL ── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.75);
+  backdrop-filter:blur(4px);z-index:200;
+  display:none;align-items:center;justify-content:center;
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:14px;padding:1.8rem;width:90%;max-width:520px;
+  max-height:90vh;overflow-y:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,0.6);
+}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.4rem}
+.modal-header h3{font-size:1rem;font-weight:700}
+.modal-close{background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer;padding:0.2rem}
+.modal-close:hover{color:var(--text)}
+.modal-footer{display:flex;gap:0.75rem;margin-top:1.4rem;justify-content:flex-end}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:3rem;color:var(--muted)}
+.empty i{font-size:2.5rem;margin-bottom:1rem;opacity:0.4}
+.empty p{font-size:0.9rem}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:1.5rem;right:1.5rem;z-index:999;
+  background:var(--bg2);border:1px solid var(--green);
+  border-radius:10px;padding:0.9rem 1.4rem;
+  color:var(--green);font-size:0.85rem;
+  transform:translateY(80px);opacity:0;
+  transition:transform .3s,opacity .3s;
+  display:flex;align-items:center;gap:0.6rem;
+}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.error{border-color:#ef4444;color:#ef4444}
+
+/* ── MOBILE HAMBURGER ── */
+.hamburger{
+  display:none;position:fixed;top:0.8rem;left:0.8rem;z-index:100;
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:7px;width:38px;height:38px;
+  align-items:center;justify-content:center;
+  cursor:pointer;color:var(--green);font-size:1rem;
+}
+.sidebar-overlay-mob{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:49;
+}
+
+/* ── CHAT ── */
+.chat-layout{display:grid;grid-template-columns:260px 1fr;gap:1rem;height:calc(100vh - 160px)}
+.chat-list{background:rgba(10,26,18,0.7);border:1px solid var(--border);border-radius:10px;overflow-y:auto}
+.chat-item{padding:0.9rem 1rem;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+.chat-item:hover,.chat-item.active{background:rgba(0,255,136,0.08)}
+.chat-item-name{font-size:0.85rem;font-weight:600}
+.chat-item-preview{font-size:0.75rem;color:var(--muted);margin-top:0.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-window{background:rgba(10,26,18,0.7);border:1px solid var(--border);border-radius:10px;display:flex;flex-direction:column}
+.chat-header{padding:1rem 1.2rem;border-bottom:1px solid var(--border);font-weight:700;font-size:0.9rem}
+.chat-messages{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.75rem}
+.msg{max-width:70%;padding:0.65rem 1rem;border-radius:10px;font-size:0.83rem;line-height:1.5}
+.msg-in{background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.15);align-self:flex-start}
+.msg-out{background:rgba(0,255,136,0.15);border:1px solid rgba(0,255,136,0.25);align-self:flex-end}
+.msg-time{font-size:0.68rem;color:var(--muted);margin-top:0.25rem}
+.chat-input-row{padding:1rem;border-top:1px solid var(--border);display:flex;gap:0.75rem}
+.chat-input-row input{flex:1;padding:0.65rem 1rem;background:rgba(0,255,136,0.04);border:1px solid rgba(0,255,136,0.2);border-radius:7px;color:var(--text);font-size:0.85rem;font-family:inherit}
+.chat-input-row input:focus{outline:none;border-color:var(--green)}
+
+/* ── PROFILE SECTION ── */
+.profile-pic-preview{width:80px;height:80px;border-radius:50%;border:2px solid var(--green);object-fit:cover;margin-bottom:1rem}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+  .form-grid{grid-template-columns:1fr}
+  .chat-layout{grid-template-columns:1fr;height:auto}
+}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:transform .3s}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  #space-canvas{left:0}
+  .hamburger{display:flex}
+  .sidebar-overlay-mob.open{display:block}
+  .stats-row{grid-template-columns:1fr 1fr}
+}
+@media(max-width:480px){.stats-row{grid-template-columns:1fr}}
+</style>
+
+<!-- Mobile hamburger -->
+<button class="hamburger" id="hamburger"><i class="fas fa-bars"></i></button>
+<div class="sidebar-overlay-mob" id="mob-overlay"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <a href="/" class="sidebar-brand"><i class="fas fa-shield-alt"></i> Admin</a>
+  </div>
+
+  <div class="sidebar-profile">
+    <img src="<%= user.profilePicture %>?v=<%= Date.now() %>" alt="avatar" class="sidebar-avatar"
+         id="sb-avatar"
+         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiMwNjRlM2IiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE2IiBmaWxsPSIjMDBmZjg4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIj5NSDwvdGV4dD48L3N2Zz4='">
+    <div>
+      <div class="sidebar-name" id="sb-name"><%= user.username %></div>
+      <div class="sidebar-role"><%= user.role === 'admin' ? 'System Admin' : 'Moderator' %></div>
+    </div>
+  </div>
+
+  <nav class="nav-section">
+    <button class="nav-item active" data-view="overview">
+      <i class="fas fa-chart-bar"></i> Overview
+    </button>
+    <button class="nav-item" data-view="users">
+      <i class="fas fa-users"></i> Users
+    </button>
+    <button class="nav-item" data-view="pending">
+      <i class="fas fa-clock"></i> Pending Files
+    </button>
+    <button class="nav-item" data-view="subjects">
+      <i class="fas fa-book"></i> Subjects
+    </button>
+    <button class="nav-item" data-view="allfiles">
+      <i class="fas fa-folder-open"></i> All Files
+    </button>
+    <button class="nav-item" data-view="broadcasts">
+      <i class="fas fa-bullhorn"></i> Broadcasts
+    </button>
+    <button class="nav-item" data-view="results">
+      <i class="fas fa-trophy"></i> Results
+    </button>
+    <button class="nav-item" data-view="messages">
+      <i class="fas fa-comments"></i> Messages
+    </button>
+    <button class="nav-item" data-view="notifications">
+      <i class="fas fa-bell"></i> Notifications
+    </button>
+    <button class="nav-item" data-view="profile">
+      <i class="fas fa-user-cog"></i> My Profile
+    </button>
+  </nav>
+
+  <div class="sidebar-footer">
+    <a href="/dashboard" class="nav-item">
+      <i class="fas fa-tachometer-alt"></i> Dashboard
+    </a>
+    <button class="nav-item" onclick="doLogout()">
+      <i class="fas fa-sign-out-alt"></i> Logout
+    </button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <canvas id="space-canvas"></canvas>
+  <div class="main-inner" id="main-content">
+    <!-- Loaded dynamically -->
+  </div>
+</main>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal" id="modal-body"></div>
+</div>
+
+<script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+<script>
+// Pass user role to JavaScript
+const currentUserRole = '<%= user.role %>';
+const isAdmin = currentUserRole === 'admin';
+const isModerator = currentUserRole === 'moderator';
+
+// ── SPACE CANVAS ──
+(function(){
+  const c=document.getElementById('space-canvas'),ctx=c.getContext('2d');
+  let W,H,pts=[];
+  function resize(){
+    const main=document.querySelector('.main');
+    W=c.width=main?main.clientWidth:window.innerWidth;
+    H=c.height=window.innerHeight;
+  }
+  function P(){this.reset()}
+  P.prototype.reset=function(){
+    this.x=Math.random()*W;this.y=Math.random()*H;
+    this.r=Math.random()<.1?Math.random()*3+2:Math.random()*1.5+.4;
+    this.sq=Math.random()<.08;this.sp=Math.random()*.2+.03;
+    this.a=Math.random()*.5+.15;this.tw=Math.random()*Math.PI*2;
+    this.ts=Math.random()*.025+.008;
+  };
+  P.prototype.draw=function(){
+    const a=this.a*(.6+.4*Math.sin(this.tw));
+    ctx.globalAlpha=a;ctx.fillStyle='#00ff88';
+    if(this.sq)ctx.fillRect(this.x-this.r,this.y-this.r,this.r*2,this.r*2);
+    else{ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,Math.PI*2);ctx.fill();}
+    ctx.globalAlpha=1;
+  };
+  P.prototype.update=function(){
+    this.y-=this.sp;this.tw+=this.ts;
+    if(this.y+this.r<0){this.y=H+this.r;this.x=Math.random()*W;}
+  };
+  function init(){resize();pts=Array.from({length:120},()=>new P());}
+  function loop(){ctx.clearRect(0,0,W,H);pts.forEach(p=>{p.update();p.draw();});requestAnimationFrame(loop);}
+  window.addEventListener('resize',resize);
+  init();loop();
+})();
+
+// ── MOBILE SIDEBAR ──
+const hamburger=document.getElementById('hamburger');
+const sidebar=document.getElementById('sidebar');
+const mobOverlay=document.getElementById('mob-overlay');
+hamburger.addEventListener('click',()=>{sidebar.classList.toggle('open');mobOverlay.classList.toggle('open');});
+mobOverlay.addEventListener('click',()=>{sidebar.classList.remove('open');mobOverlay.classList.remove('open');});
+
+// ── TOAST ──
+function toast(msg,type='success'){
+  const t=document.getElementById('toast');
+  t.className='toast'+(type==='error'?' error':'');
+  t.innerHTML=(type==='error'?'<i class="fas fa-times-circle"></i>':'<i class="fas fa-check-circle"></i>')+' '+msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+// ── MODAL ──
+function openModal(html){
+  document.getElementById('modal-body').innerHTML=html;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))closeModal();});
+
+// ── API ──
+async function api(url,opts={}){
+  const r=await fetch('/api'+url,{...opts,credentials:'include',headers:{'Content-Type':'application/json',...(opts.headers||{})}});
+  const d=await r.json();
+  if(!r.ok)throw new Error(d.message||'Error');
+  return d;
+}
+async function apiForm(url,fd){
+  const r=await fetch('/api'+url,{method:'POST',body:fd,credentials:'include'});
+  const d=await r.json();
+  if(!r.ok)throw new Error(d.message||'Error');
+  return d;
+}
+
+// ── FORMAT ──
+function fmtSize(b){if(!b)return'0 B';const k=1024,s=['B','KB','MB','GB'];const i=Math.floor(Math.log(b)/Math.log(k));return(b/Math.pow(k,i)).toFixed(1)+' '+s[i];}
+function fmtDate(d){return new Date(d).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});}
+
+// ── NAVIGATION ──
+document.querySelectorAll('.nav-item[data-view]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-item[data-view]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    loadView(btn.dataset.view);
+    if(window.innerWidth<768){sidebar.classList.remove('open');mobOverlay.classList.remove('open');}
+  });
+});
+
+function loadView(v){
+  const views={
+    overview:viewOverview,users:viewUsers,pending:viewPending,
+    subjects:viewSubjects,allfiles:viewAllFiles,broadcasts:viewBroadcasts,
+    results:viewResults,messages:viewMessages,notifications:viewNotifications,
+    profile:viewProfile
+  };
+  
+  if(!views[v]) return;
+  
+  // Use smooth transition
+  const mc = document.getElementById('main-content');
+  mc.style.opacity = '0';
+  mc.style.transform = 'translateX(-20px)';
+  mc.style.transition = 'opacity 0.25s ease-in, transform 0.25s ease-in';
+  
+  setTimeout(() => {
+    views[v]();
+    
+    // Scroll to top
+    const main = document.querySelector('.main');
+    if(main) main.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Enter animation
+    requestAnimationFrame(() => {
+      mc.style.transition = 'opacity 0.35s cubic-bezier(0.16,1,0.3,1), transform 0.35s cubic-bezier(0.16,1,0.3,1)';
+      mc.style.opacity = '1';
+      mc.style.transform = 'translateX(0)';
+    });
+  }, 250);
+}
+
+// ── LOGOUT ──
+async function doLogout(){
+  await api('/auth/logout',{method:'POST'});
+  window.location.href='/';
+}
+
+// ── OVERVIEW ──
+async function viewOverview(){
+  const mc=document.getElementById('main-content');
+  mc.innerHTML=`<div class="section-header"><i class="fas fa-chart-bar"></i><h2>System Overview</h2></div>
+  <div class="stats-row" id="stats-row"><div style="color:var(--muted);font-size:.85rem">Loading...</div></div>`;
+  try{
+    const d=await api('/admin/stats');
+    const s=d.stats;
+    document.getElementById('stats-row').innerHTML=`
+      <div class="stat-card"><div class="stat-icon-box"><i class="fas fa-users"></i></div>
+        <div class="stat-num">${s.users.total}</div><div class="stat-label">Total Users</div>
+        <div class="stat-sub">${s.users.pending} pending</div></div>
+      <div class="stat-card"><div class="stat-icon-box"><i class="fas fa-file"></i></div>
+        <div class="stat-num">${s.files.total}</div><div class="stat-label">Total Files</div>
+        <div class="stat-sub">${s.files.pending} pending</div></div>
+      <div class="stat-card"><div class="stat-icon-box"><i class="fas fa-hdd"></i></div>
+        <div class="stat-num">${s.storage.usedMB}</div><div class="stat-label">Storage Used (MB)</div>
+        <div class="stat-sub">across ${s.files.total} files</div></div>
+      <div class="stat-card"><div class="stat-icon-box"><i class="fas fa-book"></i></div>
+        <div class="stat-num">${s.subjects}</div><div class="stat-label">Subjects</div>
+        <div class="stat-sub">${s.chapters} chapters</div></div>`;
+  }catch(e){toast(e.message,'error');}
+}
+</script>
+
+<script>
+// ── USERS VIEW ──
+async function viewUsers(){
+  const mc=document.getElementById('main-content');
+  mc.innerHTML=`<div class="section-header"><i class="fas fa-users"></i><h2>User Management</h2>
+    <button class="btn btn-green" style="margin-left:auto" onclick="viewUsers()"><i class="fas fa-sync"></i> Refresh</button></div>
+    <div class="table-card"><div class="table-card-header"><h3>All Users</h3></div>
+    <div id="users-table"><div style="padding:2rem;color:var(--muted);text-align:center">Loading...</div></div></div>`;
+  try{
+    const d=await api('/users');
+    const cacheBuster = '?v=' + Date.now();
+    const rows=d.users.map(u=>{
+      // Moderators can only see admins and moderators, not edit them
+      const canEdit = isAdmin || (isModerator && u.role !== 'admin' && u.role !== 'moderator');
+      const showActions = u.role !== 'admin' && canEdit;
+      
+      return `
+      <tr>
+        <td><div style="display:flex;align-items:center;gap:.6rem">
+          <img src="${u.profilePicture||'/assets/images/default-avatar.png'}${cacheBuster}" style="width:30px;height:30px;border-radius:50%;object-fit:cover;border:1px solid var(--border)"
+               onerror="this.src='/assets/images/default-avatar.png${cacheBuster}'">
+          ${u.username}</div></td>
+        <td style="font-size:.78rem">${u.email}</td>
+        <td><span class="badge ${u.role==='admin'?'badge-blue':u.role==='moderator'?'badge-yellow':'badge-green'}">${u.role}</span></td>
+        <td><span class="badge ${u.status==='approved'?'badge-green':u.status==='pending'?'badge-yellow':'badge-red'}">${u.status}</span></td>
+        <td style="font-size:.75rem;color:var(--muted)">${fmtDate(u.createdAt)}</td>
+        <td class="action-cell">
+          <div style="display:flex;gap:.35rem;flex-wrap:wrap">
+            ${showActions?`
+              ${u.status==='pending'?`<button class="btn btn-green btn-sm" onclick="approveUser('${u.id}')"><i class="fas fa-check"></i> Approve</button>`:''}
+              ${u.status==='approved'?`<button class="btn btn-gray btn-sm" onclick="suspendUser('${u.id}')"><i class="fas fa-ban"></i> Suspend</button>`:''}
+              ${u.status==='suspended'?`<button class="btn btn-green btn-sm" onclick="approveUser('${u.id}')"><i class="fas fa-undo"></i> Restore</button>`:''}
+              ${isAdmin?`<button class="btn btn-gray btn-sm" onclick="showResetPassword('${u.id}','${u.username.replace(/'/g,"\\'")}')"><i class="fas fa-key"></i> Reset</button>`:''}
+              ${isAdmin?`<button class="btn btn-gray btn-sm" onclick="showChangeRole('${u.id}','${u.username.replace(/'/g,"\\'")}','${u.role}')"><i class="fas fa-user-tag"></i> Role</button>`:''}
+              ${isAdmin?`<button class="btn btn-red btn-sm" onclick="deleteUser('${u.id}','${u.username.replace(/'/g,"\\'")}')"><i class="fas fa-trash"></i> Delete</button>`:''}
+            `:(u.role==='admin'||u.role==='moderator')?`<span style="color:var(--muted);font-size:.72rem"><i class="fas fa-shield-alt"></i> ${u.role==='admin'?'Admin':'Moderator'}</span>`:'<span style="color:var(--muted);font-size:.72rem">View Only</span>'}
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+    document.getElementById('users-table').innerHTML=`<table>
+      <thead><tr><th>User</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
+      <tbody>${rows||'<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">No users found</td></tr>'}</tbody></table>`;
+  }catch(e){toast(e.message,'error');}
+}
+
+function showResetPassword(userId,username){
+  openModal(`<div class="modal-header"><h3><i class="fas fa-key" style="color:var(--green)"></i> Reset Password</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem">Set a new password for <strong style="color:var(--text)">${username}</strong></p>
+    <div class="form-group"><label class="form-label">New Password</label>
+      <input type="password" class="form-input" id="rp-pass" placeholder="Min. 6 characters" minlength="6"></div>
+    <div class="form-group"><label class="form-label">Confirm Password</label>
+      <input type="password" class="form-input" id="rp-confirm" placeholder="Repeat password"></div>
+    <div class="modal-footer">
+      <button class="btn btn-gray" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-green" onclick="doResetPassword('${userId}')"><i class="fas fa-check"></i> Reset</button>
+    </div>`);
+}
+async function doResetPassword(userId){
+  const pw=document.getElementById('rp-pass').value;
+  const cf=document.getElementById('rp-confirm').value;
+  if(!pw||pw.length<6)return toast('Password must be at least 6 characters','error');
+  if(pw!==cf)return toast('Passwords do not match','error');
+  try{
+    await api(`/users/${userId}/reset-password`,{method:'PUT',body:JSON.stringify({newPassword:pw})});
+    closeModal();toast('Password reset successfully');
+  }catch(e){toast(e.message,'error');}
+}
+
+function showChangeRole(userId,username,currentRole){
+  const roles=['user','moderator','admin'];
+  openModal(`<div class="modal-header"><h3><i class="fas fa-user-tag" style="color:var(--green)"></i> Change Role</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem">Change role for <strong style="color:var(--text)">${username}</strong></p>
+    <p style="font-size:.75rem;color:#f59e0b;margin-bottom:1rem"><i class="fas fa-exclamation-triangle"></i> Note: You cannot change your own role or another admin's role.</p>
+    <div class="form-group"><label class="form-label">Select Role</label>
+      <select class="form-select" id="role-select">
+        ${roles.map(r=>`<option value="${r}" ${r===currentRole?'selected':''}>${r.charAt(0).toUpperCase()+r.slice(1)}</option>`).join('')}
+      </select></div>
+    <div class="modal-footer">
+      <button class="btn btn-gray" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-green" onclick="doChangeRole('${userId}')"><i class="fas fa-check"></i> Update Role</button>
+    </div>`);
+}
+async function doChangeRole(userId){
+  const role=document.getElementById('role-select').value;
+  try{
+    await api(`/users/${userId}/role`,{method:'PUT',body:JSON.stringify({role})});
+    closeModal();toast('Role updated to '+role);viewUsers();
+  }catch(e){toast(e.message,'error');}
+}
+
+async function approveUser(id){
+  try{await api(`/users/${id}`,{method:'PUT',body:JSON.stringify({status:'approved'})});toast('User approved');viewUsers();}
+  catch(e){toast(e.message,'error');}
+}
+async function suspendUser(id){
+  try{await api(`/users/${id}`,{method:'PUT',body:JSON.stringify({status:'suspended'})});toast('User suspended');viewUsers();}
+  catch(e){toast(e.message,'error');}
+}
+async function deleteUser(id,name){
+  if(!confirm(`Delete user "${name}"?`))return;
+  try{await api(`/users/${id}`,{method:'DELETE'});toast('User deleted');viewUsers();}
+  catch(e){toast(e.message,'error');}
+}
+
+// ── PENDING FILES ──
+async function viewPending(){
+  const mc=document.getElementById('main-content');
+  mc.innerHTML=`<div class="section-header"><i class="fas fa-clock"></i><h2>Pending File Approvals</h2></div>
+    <div id="pending-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem">
+    <div style="color:var(--muted);font-size:.85rem">Loading...</div></div>`;
+  try{
+    const d=await api('/files/pending');
+    const cacheBuster = '?v=' + Date.now();
+    if(!d.files.length){
+      document.getElementById('pending-grid').innerHTML=`<div class="empty"><i class="fas fa-check-circle"></i><p>No pending files</p></div>`;return;
+    }
+    document.getElementById('pending-grid').innerHTML=d.files.map(f=>`
+      <div class="table-card" style="padding:1rem">
+        <img src="${f.thumbnailPath||'/assets/images/default-thumb.jpg'}${cacheBuster}" style="width:100%;height:130px;object-fit:cover;border-radius:7px;margin-bottom:.8rem"
+             onerror="this.src='/assets/images/default-thumb.jpg${cacheBuster}'">
+        <div style="font-size:.82rem;font-weight:600;margin-bottom:.3rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.filename}</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-bottom:.8rem">By ${f.uploadedBy} · ${fmtSize(f.size)}</div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+          <button class="btn btn-green btn-sm" style="flex:1" onclick="approveFile('${f.id}')"><i class="fas fa-check"></i> Approve</button>
+          ${isAdmin?`<button class="btn btn-red btn-sm" style="flex:1" onclick="rejectFile('${f.id}')"><i class="fas fa-times"></i> Reject</button>`:''}
+        </div>
+      </div>`).join('');
+  }catch(e){toast(e.message,'error');}
+}
+async function approveFile(id){
+  try{await api(`/files/approve/${id}`,{method:'PUT'});toast('File approved');viewPending();}
+  catch(e){toast(e.message,'error');}
+}
+async function rejectFile(id){
+  if(!confirm('Reject and delete this file?'))return;
+  try{await api(`/files/reject/${id}`,{method:'PUT'});toast('File rejected');viewPending();}
+  catch(e){toast(e.message,'error');}
+}
+</script>
+
+<script>
+// ── SUBJECTS VIEW ──
+async function viewSubjects(){
+  const mc=document.getElementById('main-content');
+  mc.innerHTML=`<div class="section-header"><i class="fas fa-book"></i><h2>Subjects & Chapters</h2>
+    <button class="btn btn-green" style="margin-left:auto" onclick="showCreateSubject()"><i class="fas fa-plus"></i> New Subject</button></div>
+    <div id="subjects-list"><div style="color:var(--muted);font-size:.85rem">Loading...</div></div>`;
+  await loadSubjectsList();
+}
+
+async function loadSubjectsList(){
+  try{
+    const d=await api('/subjects');
+    if(!d.subjects.length){
+      document.getElementById('subjects-list').innerHTML=`<div class="empty"><i class="fas fa-book-open"></i><p>No subjects yet. Create one!</p></div>`;return;
+    }
+    document.getElementById('subjects-list').innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem">
+      ${d.subjects.map(s=>`
+        <div class="table-card" style="padding:1.2rem">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem">
+            <div style="font-weight:700;font-size:.95rem">${s.name}</div>
+            <div style="display:flex;gap:.4rem">
+              <button class="btn btn-green btn-sm" onclick="showCreateChapter('${s.id}','${s.name}')"><i class="fas fa-plus"></i> Chapter</button>
+              <button class="btn btn-gray btn-sm" onclick="editSubject('${s.id}','${s.name}')"><i class="fas fa-edit"></i></button>
+              <button class="btn btn-red btn-sm" onclick="deleteSubject('${s.id}','${s.name}')"><i class="fas fa-trash"></i></button>
+            </div>
+          </div>
+          <div style="font-size:.75rem;color:var(--muted);margin-bottom:.8rem">${s.chapterCount} chapters · ${s.fileCount} files</div>
+          <button class="btn btn-gray btn-sm" onclick="viewChapters('${s.id}','${s.name}')"><i class="fas fa-list"></i> View Chapters</button>
+        </div>`).join('')}
+    </div>`;
+  }catch(e){toast(e.message,'error');}
+}
+
+function showCreateSubject(){
+  openModal(`<div class="modal-header"><h3><i class="fas fa-plus"></i> Create Subject</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="form-group"><label class="form-label">Subject Name</label>
+    <input type="text" class="form-input" id="subj-name" placeholder="e.g. Physics"></div>
+    <div class="modal-footer">
+      <button class="btn btn-gray" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-green" onclick="createSubject()"><i class="fas fa-check"></i> Create</button>
+    </div>`);
+  setTimeout(()=>document.getElementById('subj-name').focus(),100);
+}
+async function createSubject(){
+  const name=document.getElementById('subj-name').value.trim();
+  if(!name)return toast('Enter a name','error');
+  try{await api('/subjects',{method:'POST',body:JSON.stringify({name})});closeModal();toast('Subject created');loadSubjectsList();}
+  catch(e){toast(e.message,'error');}
+}
+function editSubject(id,name){
+  openModal(`<div class="modal-header"><h3><i class="fas fa-edit"></i> Rename Subject</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="form-group"><label class="form-label">New Name</label>
+    <input type="text" class="form-input" id="subj-edit-name" value="${name}"></div>
+    <div class="modal-footer">
+      <button class="btn btn-gray" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-green" onclick="saveSubject('${id}')"><i class="fas fa-check"></i> Save</button>
+    </div>`);
+}
+async function saveSubject(id){
+  const name=document.getElementById('subj-edit-name').value.trim();
+  if(!name)return toast('Enter a name','error');
+  try{await api(`/subjects/${id}`,{method:'PUT',body:JSON.stringify({name})});closeModal();toast('Subject renamed');loadSubjectsList();}
+  catch(e){toast(e.message,'error');}
+}
+async function deleteSubject(id,name){
+  if(!confirm(`Delete subject "${name}" and all its chapters/files?`))return;
+  try{await api(`/subjects/${id}`,{method:'DELETE'});toast('Subject deleted');loadSubjectsList();}
+  catch(e){toast(e.message,'error');}
+}
+
+function showCreateChapter(subjectId,subjectName){
+  openModal(`<div class="modal-header"><h3><i class="fas fa-plus"></i> Add Chapter to "${subjectName}"</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="form-group"><label class="form-label">Chapter Name</label>
+    <input type="text" class="form-input" id="chap-name" placeholder="e.g. Chapter 1: Kinematics"></div>
+    <div class="modal-footer">
+      <button class="btn btn-gray" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-green" onclick="createChapter('${subjectId}')"><i class="fas fa-check"></i> Create</button>
+    </div>`);
+  setTimeout(()=>document.getElementById('chap-name').focus(),100);
+}
+async function createChapter(subjectId){
+  const name=document.getElementById('chap-name').value.trim();
+  if(!name)return toast('Enter a name','error');
+  try{await api(`/subjects/${subjectId}/chapters`,{method:'POST',body:JSON.stringify({name})});closeModal();toast('Chapter created');loadSubjectsList();}
+  catch(e){toast(e.message,'error');}
+}
+
+async function viewChapters(subjectId,subjectName){
+  const mc=document.getElementById('main-content');
+  mc.innerHTML=`<div class="section-header">
+    <button class="btn btn-gray btn-sm" onclick="viewSubjects()"><i class="fas fa-arrow-left"></i></button>
+    <i class="fas fa-list"></i><h2>${subjectName} — Chapters</h2>
+    <button class="btn btn-green" style="margin-left:auto" onclick="showCreateChapter('${subjectId}','${subjectName}')"><i class="fas fa-plus"></i> Add Chapter</button>
+    <button class="btn btn-green" onclick="showUploadToSubject('${subjectId}','${subjectName}')"><i class="fas fa-upload"></i> Upload File</button>
+  </div><div id="chap-list"><div style="color:var(--muted)">Loading...</div></div>`;
+  try{
+    const d=await api(`/subjects/${subjectId}/chapters`);
+    if(!d.chapters.length){document.getElementById('chap-list').innerHTML=`<div class="empty"><i class="fas fa-folder-open"></i><p>No chapters yet</p></div>`;return;}
+    document.getElementById('chap-list').innerHTML=`<div class="table-card"><table>
+      <thead><tr><th>#</th><th>Chapter Name</th><th>Files</th><th>Actions</th></tr></thead>
+      <tbody>${d.chapters.map((c,i)=>`<tr>
+        <td style="color:var(--muted)">${i+1}</td>
+        <td style="font-weight:600">${c.name}</td>
+        <td><span class="badge badge-green">${c.fileCount}</span></td>
+        <td style="display:flex;gap:.4rem">
+          <button class="btn btn-green btn-sm" onclick="viewChapterFiles('${c.id}','${c.name}','${subjectId}','${subjectName}')"><i class="fas fa-folder-open"></i> Files</button>
+          <button class="btn btn-gray btn-sm" onclick="editChapter('${c.id}','${c.name}','${subjectId}','${subjectName}')"><i class="fas fa-edit"></i></button>
+          <button class="btn btn-red btn-sm" onclick="deleteChapter('${c.id}','${c.name}','${subjectId}','${subjectName}')"><i class="fas fa-trash"></i></button>
+        </td></tr>`).join('')}
+      </tbody></table></div>`;
+  }catch(e){toast(e.message,'error');}
+}
+
+function editChapter(id,name,subjectId,subjectName){
+  openModal(`<div class="modal-header"><h3>Rename Chapter</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="form-group"><label class="form-label">New Name</label>
+    <input type="text" class="form-input" id="chap-edit-name" value="${name}"></div>
+    <div class="modal-footer">
+      <button class="btn btn-gray" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-green" onclick="saveChapter('${id}','${subjectId}','${subjectName}')">Save</button>
+    </div>`);
+}
+async function saveChapter(id,subjectId,subjectName){
+  const name=document.getElementById('chap-edit-name').value.trim();
+  if(!name)return toast('Enter a name','error');
+  try{await api(`/chapters/${id}`,{method:'PUT',body:JSON.stringify({name})});closeModal();toast('Chapter renamed');viewChapters(subjectId,subjectName);}
+  catch(e){toast(e.message,'error');}
+}
+async function deleteChapter(id,name,subjectId,subjectName){
+  if(!confirm(`Delete chapter "${name}"?`))return;
+  try{await api(`/chapters/${id}`,{method:'DELETE'});toast('Chapter deleted');viewChapters(subjectId,subjectName);}
+  catch(e){toast(e.message,'error');}
+}
+
+async function viewChapterFiles(chapterId,chapterName,subjectId,subjectName){
+  const mc=document.getElementById('main-content');
+  mc.innerHTML=`<div class="section-header">
+    <button class="btn btn-gray btn-sm" onclick="viewChapters('${subjectId}','${subjectName}')"><i class="fas fa-arrow-left"></i></button>
+    <i class="fas fa-file"></i><h2>${subjectName} › ${chapterName}</h2>
+    <button class="btn btn-green" style="margin-left:auto" onclick="showUploadToChapter('${subjectId}','${chapterId}','${chapterName}','${subjectName}')"><i class="fas fa-upload"></i> Upload</button>
+  </div><div id="chap-files"><div style="color:var(--muted)">Loading...</div></div>`;
+  try{
+    const d=await api(`/files?chapterId=${chapterId}`);
+    if(!d.files.length){document.getElementById('chap-files').innerHTML=`<div class="empty"><i class="fas fa-file"></i><p>No files in this chapter</p></div>`;return;}
+    document.getElementById('chap-files').innerHTML=`<div class="table-card"><table>
+      <thead><tr><th>File</th><th>Category</th><th>Size</th><th>Download</th><th>Actions</th></tr></thead>
+      <tbody>${d.files.map(f=>`<tr>
+        <td><div style="display:flex;align-items:center;gap:.6rem">
+          <img src="${f.thumbnailPath||'/assets/images/default-thumb.jpg'}" style="width:36px;height:36px;object-fit:cover;border-radius:5px" onerror="this.src='/assets/images/default-thumb.jpg'">
+          <span style="font-size:.82rem">${f.filename}</span></div></td>
+        <td><span class="badge badge-blue">${f.category}</span></td>
+        <td style="color:var(--muted);font-size:.78rem">${fmtSize(f.size)}</td>
+        <td><span class="badge ${f.downloadAllowed?'badge-green':'badge-red'}">${f.downloadAllowed?'Yes':'No'}</span></td>
+        <td style="display:flex;gap:.4rem">
+          <button class="btn btn-gray btn-sm" onclick="toggleDownload('${f.id}',${!f.downloadAllowed},'${chapterId}','${chapterName}','${subjectId}','${subjectName}')">
+            <i class="fas fa-${f.downloadAllowed?'lock':'unlock'}"></i></button>
+          <button class="btn btn-red btn-sm" onclick="deleteFileAdmin('${f.id}','${chapterId}','${chapterName}','${subjectId}','${subjectName}')"><i class="fas fa-trash"></i></button>
+        </td></tr>`).join('')}
+      </tbody></table></div>`;
+  }catch(e){toast(e.message,'error');}
+}
+
+async function toggleDownload(fileId,val,chapterId,chapterName,subjectId,subjectName){
+  try{await api(`/files/${fileId}`,{method:'PUT',body:JSON.stringify({downloadAllowed:val})});toast('Updated');viewChapterFiles(chapterId,chapterName,subjectId,subjectName);}
+  catch(e){toast(e.message,'error');}
+}
+async function deleteFileAdmin(fileId,chapterId,chapterName,subjectId,subjectName){
+  if(!confirm('Delete this file?'))return;
+  try{await api(`/files/${fileId}`,{method:'DELETE'});toast('File deleted');viewChapterFiles(chapterId,chapterName,subjectId,subjectName);}
+  catch(e){toast(e.message,'error');}
+}
+
+function showUploadToSubject(subjectId,subjectName){showUploadModal(subjectId,null,subjectName,'');}
+function showUploadToChapter(subjectId,chapterId,chapterName,subjectName){showUploadModal(subjectId,chapterId,subjectName,chapterName);}
+
+function showUploadModal(subjectId,chapterId,subjectName,chapterName){
+  openModal(`<div class="modal-header"><h3><i class="fas fa-upload"></i> Upload File</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:1rem">To: ${subjectName}${chapterName?' › '+chapterName:''}</div>
+    <form id="upload-form">
+      <div class="form-group"><label class="form-label">File</label><input type="file" class="form-input" id="up-file" required></div>
+      <div class="form-group"><label class="form-label">Category</label>
+        <select class="form-select" id="up-cat">
+          <option value="pdf">PDF</option><option value="book">Book</option>
+          <option value="note">Note</option><option value="sheet">Sheet</option><option value="other">Other</option>
+        </select></div>
+      <div class="form-group"><label class="form-label">Description (optional)</label>
+        <textarea class="form-textarea" id="up-desc" rows="2"></textarea></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-gray" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-green" id="up-btn"><i class="fas fa-upload"></i> Upload</button>
+      </div>
+    </form>`);
+  document.getElementById('upload-form').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const file=document.getElementById('up-file').files[0];
+    if(!file)return toast('Select a file','error');
+    const fd=new FormData();
+    fd.append('file',file);
+    fd.append('category',document.getElementById('up-cat').value);
+    fd.append('description',document.getElementById('up-desc').value);
+    if(subjectId)fd.append('subjectId',subjectId);
+    if(chapterId)fd.append('chapterId',chapterId);
+    const btn=document.getElementById('up-btn');
+    btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Uploading...';btn.disabled=true;
+    try{
+      const r=await fetch('/api/files/upload',{method:'POST',body:fd,credentials:'include'});
+      const data=await r.json();
+      if(!r.ok)throw new Error(data.message);
+      closeModal();toast('File uploaded successfully');
+      if(chapterId)viewChapterFiles(chapterId,chapterName,subjectId,subjectName);
+      else viewSubjects();
+    }catch(err){toast(err.message,'error');btn.innerHTML='<i class="fas fa-upload"></i> Upload';btn.disabled=false;}
+  });
+}
+</script>
+
+<script>
+// ── ALL FILES ──
+async function viewAllFiles(){
+  const mc=document.getElementById('main-content');
+  mc.innerHTML=`<div class="section-header"><i class="fas fa-folder-open"></i><h2>All Files</h2></div>
+    <div id="all-files-list"><div style="color:var(--muted)">Loading...</div></div>`;
+  try{
+    const d=await api('/files');
+    if(!d.files.length){document.getElementById('all-files-list').innerHTML=`<div class="empty"><i class="fas fa-folder-open"></i><p>No files yet</p></div>`;return;}
+    document.getElementById('all-files-list').innerHTML=`<div class="table-card"><table>
+      <thead><tr><th>File</th><th>Category</th><th>Uploaded By</th><th>Size</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>${d.files.map(f=>`<tr>
+        <td><div style="display:flex;align-items:center;gap:.6rem">
+          <img src="${f.thumbnailPath||'/assets/images/default-thumb.jpg'}" style="width:36px;height:36px;object-fit:cover;border-radius:5px" onerror="this.src='/assets/images/default-thumb.jpg'">
+          <span style="font-size:.82rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.filename}</span></div></td>
+        <td><span class="badge badge-blue">${f.category}</span></td>
+        <td style="font-size:.78rem;color:var(--muted)">${f.uploadedBy}</td>
+        <td style="font-size:.78rem;color:var(--muted)">${fmtSize(f.size)}</td>
+        <td><span class="badge badge-green">approved</span></td>
+        <td style="display:flex;gap:.4rem">
+          <button class="btn btn-green btn-sm" onclick="shareFileModal('${f.id}','${f.filename.replace(/'/g,"\\'")}')"><i class="fas fa-share"></i></button>
+          <button class="btn btn-red btn-sm" onclick="deleteFileSimple('${f.id}')"><i class="fas fa-trash"></i></button>
+        </td></tr>`).join('')}
+      </tbody></table></div>`;
+  }catch(e){toast(e.message,'error');}
+}
+
+async function deleteFileSimple(id){
+  if(!confirm('Delete this file?'))return;
+  try{await api(`/files/${id}`,{method:'DELETE'});toast('Deleted');viewAllFiles();}
+  catch(e){toast(e.message,'error');}
+}
+
+async function shareFileModal(fileId,filename){
+  openModal(`<div class="modal-header"><h3><i class="fas fa-share"></i> Share "${filename}"</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem">Select users to share with:</p>
+    <div id="share-users-list"><div style="color:var(--muted)">Loading users...</div></div>
+    <div class="modal-footer">
+      <button class="btn btn-gray" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-green" onclick="doShare('${fileId}')"><i class="fas fa-share"></i> Share</button>
+    </div>`);
+  try{
+    const d=await api('/users/approved');
+    if(!d.users.length){document.getElementById('share-users-list').innerHTML='<p style="color:var(--muted);font-size:.82rem">No approved users</p>';return;}
+    document.getElementById('share-users-list').innerHTML=d.users.map(u=>`
+      <label style="display:flex;align-items:center;gap:.75rem;padding:.65rem;margin-bottom:.4rem;background:rgba(0,255,136,.04);border:1px solid var(--border);border-radius:7px;cursor:pointer">
+        <input type="checkbox" value="${u.id}" style="accent-color:var(--green);width:16px;height:16px">
+        <img src="${u.profilePicture}" style="width:32px;height:32px;border-radius:50%;object-fit:cover" onerror="this.src='/assets/images/default-avatar.png'">
+        <div><div style="font-size:.83rem;font-weight:600">${u.username}</div><div style="font-size:.72rem;color:var(--muted)">${u.email}</div></div>
+      </label>`).join('');
+  }catch(e){toast(e.message,'error');}
+}
+async function doShare(fileId){
+  const checked=[...document.querySelectorAll('#share-users-list input:checked')].map(i=>i.value);
+  if(!checked.length)return toast('Select at least one user','error');
+  try{await api('/files/share',{method:'POST',body:JSON.stringify({fileId,userIds:checked})});closeModal();toast('File shared successfully');}
+  catch(e){toast(e.message,'error');}
+}
+
+// ── BROADCASTS ──
+async function viewBroadcasts(){
+  const mc=document.getElementById('main-content');
+  mc.innerHTML=`<div class="section-header"><i class="fas fa-bullhorn"></i><h2>Broadcasts</h2>
+    <button class="btn btn-green" style="margin-left:auto" onclick="showCreateBroadcast()"><i class="fas fa-plus"></i> New Broadcast</button></div>
+    <div id="bc-list"><div style="color:var(--muted)">Loading...</div></div>`;
+  try{
+    const d=await api('/broadcasts');
+    if(!d.broadcasts.length){document.getElementById('bc-list').innerHTML=`<div class="empty"><i class="fas fa-bullhorn"></i><p>No broadcasts yet</p></div>`;return;}
+    document.getElementById('bc-list').innerHTML=`<div style="display:flex;flex-direction:column;gap:.75rem">
+      ${d.broadcasts.map(b=>`
+        <div class="table-card" style="padding:1.2rem">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem">
+            <div style="flex:1">
+              ${b.pinned?'<span class="badge badge-yellow" style="margin-bottom:.5rem"><i class="fas fa-thumbtack"></i> Pinned</span>':''}
+              <div style="font-size:.88rem;line-height:1.6;margin-bottom:.5rem">${b.message}</div>
+              <div style="font-size:.72rem;color:var(--muted)">${fmtDate(b.createdAt)}</div>
+            </div>
+            <div style="display:flex;gap:.4rem;flex-shrink:0">
+              <button class="btn btn-gray btn-sm" onclick="togglePin('${b.id}',${!b.pinned})">
+                <i class="fas fa-thumbtack"></i> ${b.pinned?'Unpin':'Pin'}</button>
+              <button class="btn btn-red btn-sm" onclick="deleteBroadcast('${b.id}')"><i class="fas fa-trash"></i></button>
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  }catch(e){toast(e.message,'error');}
+}
+function showCreateBroadcast(){
+  openModal(`<div class="modal-header"><h3><i class="fas fa-bullhorn"></i> New Broadcast</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="form-group"><label class="form-label">Message</label>
+    <textarea class="form-textarea" id="bc-msg" rows="4" placeholder="Write your announcement..."></textarea></div>
+    <div class="form-group"><label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem;color:var(--muted)">
+      <input type="checkbox" id="bc-pin" style="accent-color:var(--green)"> Pin this broadcast</label></div>
+    <div class="modal-footer">
+      <button class="btn btn-gray" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-green" onclick="createBroadcast()"><i class="fas fa-paper-plane"></i> Send</button>
+    </div>`);
+}
+async function createBroadcast(){
+  const msg=document.getElementById('bc-msg').value.trim();
+  if(!msg)return toast('Enter a message','error');
+  const pinned=document.getElementById('bc-pin').checked;
+  try{await api('/broadcasts',{method:'POST',body:JSON.stringify({message:msg,pinned})});closeModal();toast('Broadcast sent');viewBroadcasts();}
+  catch(e){toast(e.message,'error');}
+}
+async function togglePin(id,val){
+  try{await api(`/broadcasts/${id}`,{method:'PUT',body:JSON.stringify({pinned:val})});toast('Updated');viewBroadcasts();}
+  catch(e){toast(e.message,'error');}
+}
+async function deleteBroadcast(id){
+  if(!confirm('Delete this broadcast?'))return;
+  try{await api(`/broadcasts/${id}`,{method:'DELETE'});toast('Deleted');viewBroadcasts();}
+  catch(e){toast(e.message,'error');}
+}
+
+// ── RESULTS ──
+async function viewResults(){
+  const mc=document.getElementById('main-content');
+  mc.innerHTML=`<div class="section-header"><i class="fas fa-trophy"></i><h2>Academic Results</h2>
+    <button class="btn btn-green" style="margin-left:auto" onclick="showAddResult()"><i class="fas fa-plus"></i> Add Result</button></div>
+    <div id="results-list"><div style="color:var(--muted)">Loading...</div></div>`;
+  try{
+    const d=await api('/results');
+    if(!d.results.length){document.getElementById('results-list').innerHTML=`<div class="empty"><i class="fas fa-trophy"></i><p>No results yet</p></div>`;return;}
+    document.getElementById('results-list').innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem">
+      ${d.results.map(r=>`
+        <div class="table-card" style="padding:1.2rem">
+          <div style="font-weight:700;font-size:.95rem;margin-bottom:.4rem">${r.title}</div>
+          <div style="font-size:1.4rem;font-weight:800;color:var(--green);margin-bottom:.4rem">GPA: ${r.gpa}</div>
+          <div style="font-size:.78rem;color:var(--muted);margin-bottom:.8rem">${r.description||''}</div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:.72rem;color:var(--muted)">${fmtDate(r.createdAt)}</span>
+            <div style="display:flex;gap:.4rem">
+              ${r.fileUrl?`<a href="${r.fileUrl}" target="_blank" class="btn btn-green btn-sm"><i class="fas fa-eye"></i></a>`:''}
+              <button class="btn btn-red btn-sm" onclick="deleteResult('${r.id}')"><i class="fas fa-trash"></i></button>
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  }catch(e){toast(e.message,'error');}
+}
+function showAddResult(){
+  openModal(`<div class="modal-header"><h3><i class="fas fa-trophy"></i> Add Result</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+    <form id="result-form">
+      <div class="form-group"><label class="form-label">Title</label><input type="text" class="form-input" id="res-title" placeholder="e.g. SSC Result 2024" required></div>
+      <div class="form-group"><label class="form-label">GPA</label><input type="number" class="form-input" id="res-gpa" step="0.01" min="0" max="5" placeholder="5.00" required></div>
+      <div class="form-group"><label class="form-label">Description</label><textarea class="form-textarea" id="res-desc" rows="2"></textarea></div>
+      <div class="form-group"><label class="form-label">Attachment (optional)</label><input type="file" class="form-input" id="res-file"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-gray" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-green"><i class="fas fa-check"></i> Save</button>
+      </div>
+    </form>`);
+  document.getElementById('result-form').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const fd=new FormData();
+    fd.append('title',document.getElementById('res-title').value);
+    fd.append('gpa',document.getElementById('res-gpa').value);
+    fd.append('description',document.getElementById('res-desc').value);
+    const f=document.getElementById('res-file').files[0];
+    if(f)fd.append('file',f);
+    try{
+      const r=await fetch('/api/admin/results',{method:'POST',body:fd,credentials:'include'});
+      const data=await r.json();if(!r.ok)throw new Error(data.message);
+      closeModal();toast('Result added');viewResults();
+    }catch(err){toast(err.message,'error');}
+  });
+}
+async function deleteResult(id){
+  if(!confirm('Delete this result?'))return;
+  try{await api(`/results/${id}`,{method:'DELETE'});toast('Deleted');viewResults();}
+  catch(e){toast(e.message,'error');}
+}
+</script>
+
+<script>
+// ── MESSAGES ──
+let activeChatUser=null;
+async function viewMessages(){
+  const mc=document.getElementById('main-content');
+  mc.innerHTML=`<div class="section-header"><i class="fas fa-comments"></i><h2>Messages</h2></div>
+    <div class="chat-layout">
+      <div class="chat-list" id="chat-list"><div style="padding:1rem;color:var(--muted);font-size:.82rem">Loading...</div></div>
+      <div class="chat-window" id="chat-window">
+        <div class="chat-header">Select a conversation</div>
+        <div class="chat-messages" id="chat-msgs" style="align-items:center;justify-content:center">
+          <div style="color:var(--muted);font-size:.85rem">Select a user to view messages</div>
+        </div>
+      </div>
+    </div>`;
+  try{
+    const d=await api('/users/approved');
+    if(!d.users.length){document.getElementById('chat-list').innerHTML='<div style="padding:1rem;color:var(--muted);font-size:.82rem">No users</div>';return;}
+    document.getElementById('chat-list').innerHTML=d.users.map(u=>`
+      <div class="chat-item" onclick="openChat('${u.id}','${u.username.replace(/'/g,"\\'")}')">
+        <div style="display:flex;align-items:center;gap:.6rem">
+          <img src="${u.profilePicture}" style="width:34px;height:34px;border-radius:50%;object-fit:cover" onerror="this.src='/assets/images/default-avatar.png'">
+          <div><div class="chat-item-name">${u.username}</div><div class="chat-item-preview">${u.email}</div></div>
+        </div>
+      </div>`).join('');
+  }catch(e){toast(e.message,'error');}
+}
+
+async function openChat(userId,username){
+  activeChatUser={id:userId,name:username};
+  document.querySelectorAll('.chat-item').forEach(i=>i.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.getElementById('chat-window').innerHTML=`
+    <div class="chat-header">${username}</div>
+    <div class="chat-messages" id="chat-msgs"><div style="color:var(--muted);font-size:.82rem;margin:auto">Loading...</div></div>
+    <div class="chat-input-row">
+      <input type="text" id="chat-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMsg()">
+      <button class="btn btn-green" onclick="sendMsg()"><i class="fas fa-paper-plane"></i></button>
+    </div>`;
+  try{
+    const d=await api(`/messages?with=${userId}`);
+    const msgs=d.conversation.messages;
+    const container=document.getElementById('chat-msgs');
+    if(!msgs.length){container.innerHTML='<div style="color:var(--muted);font-size:.82rem;margin:auto">No messages yet</div>';return;}
+    container.innerHTML=msgs.map(m=>`
+      <div class="msg ${m.isMine?'msg-out':'msg-in'}">
+        <div>${m.text}</div>
+        <div class="msg-time">${fmtDate(m.createdAt)}</div>
+      </div>`).join('');
+    container.scrollTop=container.scrollHeight;
+  }catch(e){toast(e.message,'error');}
+}
+
+async function sendMsg(){
+  if(!activeChatUser)return;
+  const input=document.getElementById('chat-input');
+  const text=input.value.trim();
+  if(!text)return;
+  input.value='';
+  try{
+    await api('/messages',{method:'POST',body:JSON.stringify({to:activeChatUser.id,text})});
+    openChat(activeChatUser.id,activeChatUser.name);
+  }catch(e){toast(e.message,'error');}
+}
+
+// ── NOTIFICATIONS ──
+async function viewNotifications(){
+  const mc=document.getElementById('main-content');
+  mc.innerHTML=`<div class="section-header"><i class="fas fa-bell"></i><h2>Notifications</h2>
+    <button class="btn btn-gray" style="margin-left:auto" onclick="markAllRead()"><i class="fas fa-check-double"></i> Mark All Read</button></div>
+    <div id="notif-list"><div style="color:var(--muted)">Loading...</div></div>`;
+  try{
+    const d=await api('/notifications');
+    if(!d.notifications.length){document.getElementById('notif-list').innerHTML=`<div class="empty"><i class="fas fa-bell-slash"></i><p>No notifications</p></div>`;return;}
+    document.getElementById('notif-list').innerHTML=`<div style="display:flex;flex-direction:column;gap:.5rem">
+      ${d.notifications.map(n=>`
+        <div class="table-card" style="padding:1rem;display:flex;align-items:center;gap:1rem;${!n.read?'border-left:3px solid var(--green)':'opacity:.7'}">
+          <div style="width:36px;height:36px;border-radius:50%;background:rgba(0,255,136,.1);display:flex;align-items:center;justify-content:center;color:var(--green);flex-shrink:0">
+            <i class="fas fa-${n.type==='share'?'share':n.type==='message'?'comment':n.type==='broadcast'?'bullhorn':'check'}"></i>
+          </div>
+          <div style="flex:1"><div style="font-size:.85rem">${n.message}</div>
+            <div style="font-size:.72rem;color:var(--muted);margin-top:.2rem">${fmtDate(n.createdAt)}</div></div>
+          ${!n.read?`<button class="btn btn-gray btn-sm" onclick="markRead('${n.id}')">Mark Read</button>`:''}
+        </div>`).join('')}
+    </div>`;
+  }catch(e){toast(e.message,'error');}
+}
+async function markRead(id){
+  try{await api(`/notifications/${id}/read`,{method:'PUT'});viewNotifications();}
+  catch(e){toast(e.message,'error');}
+}
+async function markAllRead(){
+  try{await api('/notifications/read-all',{method:'PUT'});toast('All marked as read');viewNotifications();}
+  catch(e){toast(e.message,'error');}
+}
+
+// ── MY PROFILE ──
+async function viewProfile(){
+  const mc=document.getElementById('main-content');
+  mc.innerHTML=`<div class="section-header"><i class="fas fa-user-cog"></i><h2>My Profile</h2></div>
+    <div style="max-width:520px">
+      <div class="table-card" style="padding:1.8rem">
+        <div style="text-align:center;margin-bottom:1.5rem">
+          <img src="<%= user.profilePicture %>" id="prof-preview" class="profile-pic-preview"
+               onerror="this.src='/assets/images/default-avatar.png'">
+        </div>
+        <form id="profile-form">
+          <div class="form-group"><label class="form-label">Username</label>
+            <input type="text" class="form-input" id="prof-name" value="<%= user.username %>"></div>
+          <div class="form-group"><label class="form-label">Email</label>
+            <input type="email" class="form-input" id="prof-email" value="<%= user.email %>"></div>
+          <div class="form-group"><label class="form-label">Profile Picture</label>
+            <input type="file" class="form-input" id="prof-pic" accept="image/*" onchange="previewPic(this)"></div>
+          <hr style="border-color:var(--border);margin:1rem 0">
+          <div style="font-size:.8rem;color:var(--muted);margin-bottom:.75rem">Change Password (leave blank to keep current)</div>
+          <div class="form-group"><label class="form-label">Current Password</label>
+            <input type="password" class="form-input" id="prof-cur-pass"></div>
+          <div class="form-group"><label class="form-label">New Password</label>
+            <input type="password" class="form-input" id="prof-new-pass"></div>
+          <button type="submit" class="btn btn-green" style="width:100%"><i class="fas fa-save"></i> Save Changes</button>
+        </form>
+      </div>
+    </div>`;
+  document.getElementById('profile-form').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const fd=new FormData();
+    fd.append('username',document.getElementById('prof-name').value);
+    fd.append('email',document.getElementById('prof-email').value);
+    const pic=document.getElementById('prof-pic').files[0];
+    if(pic)fd.append('profilePicture',pic);
+    const cur=document.getElementById('prof-cur-pass').value;
+    const nw=document.getElementById('prof-new-pass').value;
+    if(cur&&nw){fd.append('currentPassword',cur);fd.append('newPassword',nw);}
+    try{
+      const r=await fetch('/api/users/profile',{method:'PUT',body:fd,credentials:'include'});
+      const data=await r.json();if(!r.ok)throw new Error(data.message);
+      toast('Profile updated');
+      if(data.user){
+        document.getElementById('sb-name').textContent=data.user.username;
+        if(data.user.profilePicture){
+          document.getElementById('sb-avatar').src=data.user.profilePicture;
+          document.getElementById('prof-preview').src=data.user.profilePicture;
+        }
+      }
+    }catch(err){toast(err.message,'error');}
+  });
+}
+function previewPic(input){
+  if(input.files&&input.files[0]){
+    const reader=new FileReader();
+    reader.onload=e=>document.getElementById('prof-preview').src=e.target.result;
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+// ── INIT ──
+viewOverview();
+</script>
+</body>
+</html>
