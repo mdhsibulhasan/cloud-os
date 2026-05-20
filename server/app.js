@@ -34,6 +34,9 @@ app.use(cookieParser());
 // Compression
 app.use(compression());
 
+// Trust proxy (required for Railway, Render, and other reverse proxies)
+app.set('trust proxy', 1);
+
 // Rate limiting for auth routes
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
