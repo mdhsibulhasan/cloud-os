@@ -216,8 +216,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .modal.modal-pdf{
   padding:0;width:min(900px,96vw);height:92vh;max-height:92vh;
   display:flex;flex-direction:column;overflow:hidden;
-}
-@keyframes modalIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+}@keyframes modalIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
 .modal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.3rem}
 .modal-hdr h3{font-size:.95rem;font-weight:700}
 .modal-close{background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer;padding:.2rem;line-height:1}
@@ -410,16 +409,16 @@ function toast(msg,type='ok'){
 // ── MODAL ──
 function openModal(html, isPdf=false){
   const body = document.getElementById('modal-body');
-  const modal = body.parentElement;
   body.innerHTML = html;
-  if(isPdf) modal.classList.add('modal-pdf');
-  else modal.classList.remove('modal-pdf');
+  if(isPdf) body.classList.add('modal-pdf');
+  else body.classList.remove('modal-pdf');
   document.getElementById('modal').classList.add('open');
 }
 function closeModal(){
   document.getElementById('modal').classList.remove('open');
-  document.getElementById('modal-body').innerHTML='';
-  document.getElementById('modal-body').parentElement.classList.remove('modal-pdf');
+  const body = document.getElementById('modal-body');
+  body.innerHTML='';
+  body.classList.remove('modal-pdf');
 }
 document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))closeModal();});
 
@@ -992,8 +991,12 @@ async function previewFile(fileId,filename,mimetype){
 
   if (!fileUrl) { toast('File URL not found', 'error'); return; }
 
-  const isPdf = (mimetype && mimetype.includes('pdf')) || filename.toLowerCase().endsWith('.pdf');
-  const isImg = mimetype && mimetype.startsWith('image/');
+  // Use API-returned mimetype, fallback to filename/URL extension detection
+  const effectiveMime = mimetype || '';
+  const lname = filename.toLowerCase();
+  const lurl = fileUrl.toLowerCase();
+  const isPdf = effectiveMime.includes('pdf') || lname.endsWith('.pdf') || lurl.includes('.pdf');
+  const isImg = effectiveMime.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp|svg|bmp)(\?|$)/.test(lname) || /\.(jpg|jpeg|png|gif|webp|svg|bmp)(\?|$)/.test(lurl);
 
   const dlBtn = downloadAllowed
     ? `<a href="${fileUrl}" download="${filename}" target="_blank" style="display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .9rem;background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.25);border-radius:6px;color:var(--green);font-size:.78rem;text-decoration:none;cursor:pointer"><i class="fas fa-download"></i> Download</a>`

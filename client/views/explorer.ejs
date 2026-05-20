@@ -714,8 +714,10 @@ const IS_ADMIN = '<%= user.role %>' === 'admin' || '<%= user.role %>' === 'moder
 let pdfZoom=100,pdfFileId='',pdfFilename='',pdfDownloadUrl='';
 
 function previewFile(fileId,filename,mimetype){
-  const isPdf=mimetype&&(mimetype.includes('pdf')||filename.toLowerCase().endsWith('.pdf'));
-  const isImg=mimetype&&(mimetype.includes('image')||/\.(png|jpg|jpeg|gif|webp|svg)$/i.test(filename));
+  const lname=(filename||'').toLowerCase();
+  const lmime=(mimetype||'').toLowerCase();
+  const isPdf=lmime.includes('pdf')||lname.endsWith('.pdf');
+  const isImg=lmime.startsWith('image/')||/\.(jpg|jpeg|png|gif|webp|svg|bmp)$/.test(lname);
   if(isPdf) openPdfViewer(fileId,filename);
   else if(isImg) openImgViewer(fileId,filename);
   else openPdfViewer(fileId,filename);
