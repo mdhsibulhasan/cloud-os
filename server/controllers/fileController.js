@@ -19,14 +19,14 @@ exports.uploadFile = async (req, res) => {
     if (category && !validCategories.includes(category)) return res.status(400).json({ success: false, message: 'Invalid category' });
 
     // Upload buffer to B2
-    const { key, url } = await uploadToB2(req.file.buffer, req.file.originalname, req.file.mimetype);
+    const { key, url, fileId: b2FileId } = await uploadToB2(req.file.buffer, req.file.originalname, req.file.mimetype);
 
     const status = req.user.role === 'admin' ? 'approved' : 'pending';
 
     const fileDoc = {
-      filename: key,           // B2 key (used for deletion/signed URL)
+      filename: key,
       originalname: req.file.originalname,
-      path: url,               // B2 public URL (used as reference)
+      path: url,
       mimetype: req.file.mimetype,
       size: req.file.size,
       category: category || 'other',
@@ -37,7 +37,8 @@ exports.uploadFile = async (req, res) => {
       downloadAllowed: true,
       sharedWith: [],
       thumbnailPath: '/assets/images/default-pdf-thumb.jpg',
-      storageType: 'b2'        // mark as B2 storage
+      storageType: 'b2',
+      b2FileId
     };
 
     if (req.user.role === 'admin' && !isPersonal) {
@@ -193,7 +194,7 @@ exports.deleteFile = async (req, res) => {
 
     // Delete from B2 or Cloudinary
     if (file.storageType === 'b2' && file.filename) {
-      await deleteFromB2(file.filename);
+      await deleteFromB2(file.filename, file.b2FileId);
     } else if (file.path && file.path.includes('cloudinary')) {
       const { deleteFromCloudinary } = require('../utils/thumbnailGenerator');
       const resourceType = file.mimetype && file.mimetype.startsWith('image/') ? 'image' : 'raw';

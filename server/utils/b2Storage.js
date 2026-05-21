@@ -1,67 +1,100 @@
-const { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
-const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+const B2 = require('backblaze-b2');
 const multer = require('multer');
 const path = require('path');
 
-// Backblaze B2 S3-compatible client
-const s3 = new S3Client({
-  endpoint: process.env.B2_ENDPOINT,
-  region: 'us-east-1', // AWS SDK requires a valid region format; B2 uses endpoint instead
-  credentials: {
-    accessKeyId: process.env.B2_KEY_ID,
-    secretAccessKey: process.env.B2_APPLICATION_KEY
-  },
-  forcePathStyle: true // Required for B2 S3-compatible API
+// Backblaze B2 native client
+const b2 = new B2({
+  applicationKeyId: process.env.B2_KEY_ID,
+  applicationKey: process.env.B2_APPLICATION_KEY
 });
 
-const BUCKET = process.env.B2_BUCKET_NAME;
+let b2Authorized = false;
+let authExpiry = 0;
+
+async function ensureAuthorized() {
+  if (b2Authorized && Date.now() < authExpiry) return;
+  await b2.authorize();
+  b2Authorized = true;
+  // B2 auth tokens expire after 24 hours
+  authExpiry = Date.now() + 23 * 60 * 60 * 1000;
+}
 
 /**
  * Upload a file buffer to Backblaze B2
  */
 async function uploadToB2(buffer, originalname, mimetype) {
-  const ext = path.extname(originalname);
-  const key = `uploads/${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+  await ensureAuthorized();
 
-  await s3.send(new PutObjectCommand({
-    Bucket: BUCKET,
-    Key: key,
-    Body: buffer,
-    ContentType: mimetype,
-    ContentDisposition: `inline; filename="${originalname}"`
-  }));
+  const ext = path.extname(originalname);
+  const safeName = originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const key = `uploads/${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeName}`;
+
+  // Get upload URL
+  const { data: uploadUrlData } = await b2.getUploadUrl({
+    bucketId: process.env.B2_BUCKET_ID
+  });
+
+  // Upload file
+  const { data: fileData } = await b2.uploadFile({
+    uploadUrl: uploadUrlData.uploadUrl,
+    uploadAuthToken: uploadUrlData.authorizationToken,
+    fileName: key,
+    data: buffer,
+    mime: mimetype,
+    contentLength: buffer.length
+  });
+
+  // Construct download URL
+  const downloadUrl = `${b2.downloadUrl}/file/${process.env.B2_BUCKET_NAME}/${key}`;
 
   return {
     key,
-    url: `${process.env.B2_ENDPOINT}/${BUCKET}/${key}`
+    fileId: fileData.fileId,
+    url: downloadUrl
   };
 }
 
 /**
- * Generate a signed URL for private file access (valid 1 hour)
+ * Generate a signed download URL for private file access (valid 1 hour)
  */
 async function getSignedFileUrl(key, expiresIn = 3600) {
-  const command = new GetObjectCommand({
-    Bucket: BUCKET,
-    Key: key
+  await ensureAuthorized();
+
+  const { data } = await b2.getDownloadAuthorization({
+    bucketId: process.env.B2_BUCKET_ID,
+    fileNamePrefix: key,
+    validDurationInSeconds: expiresIn
   });
-  return getSignedUrl(s3, command, { expiresIn });
+
+  return `${b2.downloadUrl}/file/${process.env.B2_BUCKET_NAME}/${key}?Authorization=${data.authorizationToken}`;
 }
 
 /**
  * Delete a file from B2
  */
-async function deleteFromB2(key) {
+async function deleteFromB2(key, fileId) {
   try {
-    await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
+    await ensureAuthorized();
+    if (fileId) {
+      await b2.deleteFileVersion({ fileId, fileName: key });
+    } else {
+      // Find file versions and delete
+      const { data } = await b2.listFileVersions({
+        bucketId: process.env.B2_BUCKET_ID,
+        startFileName: key,
+        maxFileCount: 1
+      });
+      if (data.files && data.files.length > 0) {
+        const f = data.files[0];
+        await b2.deleteFileVersion({ fileId: f.fileId, fileName: f.fileName });
+      }
+    }
   } catch (e) {
     console.error('B2 delete error:', e.message);
   }
 }
 
-/**
- * Multer memory storage — files stored in memory then uploaded to B2
- */
+// File filters
 const fileFilter = (req, file, cb) => {
   const allowed = [
     'application/pdf',
@@ -81,11 +114,11 @@ const imageFilter = (req, file, cb) => {
   else cb(new Error('Only images allowed'), false);
 };
 
-// Use memory storage — we upload to B2 manually in the controller
+// Multer with memory storage — files uploaded to B2 in controller
 exports.uploadFile = multer({
   storage: multer.memoryStorage(),
   fileFilter,
-  limits: { fileSize: 500 * 1024 * 1024 } // 500MB — B2 has no per-file limit on free tier
+  limits: { fileSize: 500 * 1024 * 1024 } // 500MB
 });
 
 exports.uploadProfile = multer({
@@ -103,4 +136,3 @@ exports.uploadBroadcast = multer({
 exports.uploadToB2 = uploadToB2;
 exports.getSignedFileUrl = getSignedFileUrl;
 exports.deleteFromB2 = deleteFromB2;
-exports.s3 = s3;

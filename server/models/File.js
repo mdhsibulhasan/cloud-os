@@ -16,7 +16,8 @@ const fileSchema = new mongoose.Schema({
   thumbnailPath: { type: String },
   subjectId:     { type: mongoose.Schema.Types.ObjectId, ref: 'Subject' },
   chapterId:     { type: mongoose.Schema.Types.ObjectId, ref: 'Chapter' },
-  storageType:   { type: String, enum: ['cloudinary', 'b2'], default: 'cloudinary' }
+  storageType:   { type: String, enum: ['cloudinary', 'b2'], default: 'cloudinary' },
+  b2FileId:      { type: String }
 }, { timestamps: true });
 
 fileSchema.index({ uploadedBy: 1 });
