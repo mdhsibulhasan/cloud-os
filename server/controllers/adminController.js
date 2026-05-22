@@ -134,103 +134,92 @@ exports.deleteResult = async (req, res) => {
   }
 };
 
-// @desc    Download backup (owner only) — ZIP with download links organized by Subject/Chapter
+// @desc    Download backup (owner only) — real files in ZIP organized by Subject/Chapter
 exports.downloadBackup = async (req, res) => {
-  try {
-    const { getSignedFileUrl } = require('../utils/b2Storage');
+  const https = require('https');
+  const http = require('http');
+  const { getSignedFileUrl } = require('../utils/b2Storage');
 
+  try {
     const [subjects, chapters, files] = await Promise.all([
       Subject.find({}).sort({ createdAt: 1 }).lean(),
       Chapter.find({}).sort({ createdAt: 1 }).lean(),
       File.find({ status: 'approved' }).lean()
     ]);
 
-    // Build lookup maps
     const subjectMap = {};
-    subjects.forEach(s => { subjectMap[s._id.toString()] = s.name; });
+    subjects.forEach(s => { subjectMap[s._id.toString()] = s.name.replace(/[/\\?%*:|"<>]/g, '-'); });
     const chapterMap = {};
-    chapters.forEach(c => { chapterMap[c._id.toString()] = { name: c.name, subjectId: c.subjectId?.toString() }; });
+    chapters.forEach(c => { chapterMap[c._id.toString()] = { name: c.name.replace(/[/\\?%*:|"<>]/g, '-'), subjectId: c.subjectId?.toString() }; });
 
-    // Group files by subject/chapter
-    const structure = {};
-    for (const file of files) {
-      let subjectName = 'Uncategorized';
-      let chapterName = '';
-
-      if (file.chapterId) {
-        const ch = chapterMap[file.chapterId.toString()];
-        if (ch) {
-          subjectName = ch.subjectId ? (subjectMap[ch.subjectId] || 'Unknown Subject') : 'Unknown Subject';
-          chapterName = ch.name;
-        }
-      } else if (file.subjectId) {
-        subjectName = subjectMap[file.subjectId.toString()] || 'Unknown Subject';
-      }
-
-      const key = `${subjectName}${chapterName ? ' > ' + chapterName : ''}`;
-      if (!structure[key]) structure[key] = [];
-
-      // Generate signed URL for B2 files
-      let downloadUrl = file.path;
-      if (file.storageType === 'b2' && file.filename) {
-        try {
-          downloadUrl = await getSignedFileUrl(file.filename, 7 * 24 * 3600); // 7 days
-        } catch(e) {
-          downloadUrl = file.path;
-        }
-      }
-
-      structure[key].push({ name: file.originalname, url: downloadUrl, size: file.size, category: file.category });
-    }
-
-    // Build ZIP with HTML index + text files per folder
-    const archive = archiver('zip', { zlib: { level: 1 } });
     const filename = `cloudos-backup-${new Date().toISOString().split('T')[0]}.zip`;
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    // Disable timeout for this long-running request
+    req.socket.setTimeout(0);
+    res.socket.setTimeout(0);
+
+    const archive = archiver('zip', { zlib: { level: 1 } }); // level 1 = fastest
+    archive.on('error', err => logger.error('Archive error:', err));
     archive.pipe(res);
 
-    // Create an HTML index file with clickable download links
-    let html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
-<title>CloudOS Backup - ${new Date().toLocaleDateString()}</title>
-<style>body{font-family:Arial,sans-serif;max-width:900px;margin:2rem auto;padding:1rem;background:#f5f5f5}
-h1{color:#064e3b}h2{color:#065f46;border-bottom:2px solid #10b981;padding-bottom:.5rem}
-.file{background:white;padding:.75rem;margin:.4rem 0;border-radius:6px;border-left:4px solid #10b981;display:flex;justify-content:space-between;align-items:center}
-a{color:#059669;text-decoration:none;font-weight:600}a:hover{text-decoration:underline}
-.meta{color:#6b7280;font-size:.8rem}.badge{background:#d1fae5;color:#065f46;padding:.2rem .5rem;border-radius:4px;font-size:.75rem}
-</style></head><body>
-<h1>☁️ CloudOS Backup</h1>
-<p>Generated: ${new Date().toLocaleString()} | Total files: ${files.length}</p>`;
-
-    for (const [folder, folderFiles] of Object.entries(structure)) {
-      const safe = folder.replace(/[/\\?%*:|"<>]/g, '-');
-      html += `<h2>📁 ${folder}</h2>`;
-      let txt = `Folder: ${folder}\nGenerated: ${new Date().toISOString()}\n${'='.repeat(60)}\n\n`;
-
-      for (const f of folderFiles) {
-        const sizeMB = f.size ? (f.size / (1024*1024)).toFixed(2) + ' MB' : 'unknown size';
-        html += `<div class="file"><div><a href="${f.url}" target="_blank" download="${f.name}">📄 ${f.name}</a><div class="meta">${sizeMB} <span class="badge">${f.category}</span></div></div><a href="${f.url}" target="_blank" download="${f.name}" style="background:#10b981;color:white;padding:.4rem .8rem;border-radius:5px;font-size:.8rem">⬇ Download</a></div>`;
-        txt += `File: ${f.name}\nSize: ${sizeMB}\nCategory: ${f.category}\nURL: ${f.url}\n\n`;
-      }
-
-      archive.append(txt, { name: `${safe}/download-links.txt` });
+    // Helper: fetch URL and return readable stream, following redirects
+    function getStream(url) {
+      return new Promise((resolve, reject) => {
+        const client = url.startsWith('https') ? https : http;
+        const req2 = client.get(url, (response) => {
+          if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
+            getStream(response.headers.location).then(resolve).catch(reject);
+          } else if (response.statusCode === 200) {
+            resolve(response);
+          } else {
+            reject(new Error(`HTTP ${response.statusCode}`));
+          }
+        });
+        req2.on('error', reject);
+        req2.setTimeout(60000, () => { req2.destroy(); reject(new Error('Request timeout')); });
+      });
     }
 
-    html += `</body></html>`;
-    archive.append(html, { name: 'index.html' });
+    let added = 0;
+    for (const file of files) {
+      if (!file.path) continue;
 
-    // Also add a manifest
-    const manifest = JSON.stringify({ exportedAt: new Date().toISOString(), totalFiles: files.length, subjects: subjects.map(s=>s.name), structure: Object.fromEntries(Object.entries(structure).map(([k,v])=>[k,v.map(f=>f.name)])) }, null, 2);
-    archive.append(manifest, { name: '_manifest.json' });
+      let folderPath = 'Uncategorized';
+      if (file.chapterId) {
+        const ch = chapterMap[file.chapterId.toString()];
+        if (ch) {
+          const subjName = ch.subjectId ? (subjectMap[ch.subjectId] || 'Unknown') : 'Unknown';
+          folderPath = `${subjName}/${ch.name}`;
+        }
+      } else if (file.subjectId) {
+        folderPath = subjectMap[file.subjectId.toString()] || 'Unknown';
+      }
 
+      const safeFilename = file.originalname.replace(/[/\\?%*:|"<>]/g, '-');
+      const zipPath = `${folderPath}/${safeFilename}`;
+
+      try {
+        let downloadUrl = file.path;
+        if (file.storageType === 'b2' && file.filename) {
+          downloadUrl = await getSignedFileUrl(file.filename, 3600);
+        }
+        const stream = await getStream(downloadUrl);
+        archive.append(stream, { name: zipPath });
+        added++;
+      } catch (err) {
+        logger.warn(`Skipping ${file.originalname}: ${err.message}`);
+        archive.append(`Could not download: ${file.originalname}\nURL: ${file.path}\nError: ${err.message}`, { name: `${folderPath}/${safeFilename}.error.txt` });
+      }
+    }
+
+    archive.append(JSON.stringify({ exportedAt: new Date().toISOString(), totalFiles: files.length, filesAdded: added }, null, 2), { name: '_manifest.json' });
     await archive.finalize();
-    logger.info(`Backup downloaded by ${req.user.email} — ${files.length} files`);
+    logger.info(`Real-file ZIP backup by ${req.user.email} — ${added}/${files.length} files`);
 
   } catch (error) {
     logger.error('Backup error:', error);
-    if (!res.headersSent) {
-      res.status(500).json({ success: false, message: 'Backup failed: ' + error.message });
-    }
+    if (!res.headersSent) res.status(500).json({ success: false, message: 'Backup failed: ' + error.message });
   }
 };
 
