@@ -7,6 +7,9 @@ const Broadcast    = require('../models/Broadcast');
 const Message      = require('../models/Message');
 const Setting      = require('../models/Setting');
 const logger = require('../utils/logger');
+const archiver = require('archiver');
+const https = require('https');
+const http = require('http');
 
 // @desc    Get admin dashboard stats
 exports.getStats = async (req, res) => {
@@ -135,10 +138,6 @@ exports.deleteResult = async (req, res) => {
 
 // @desc    Download backup (owner only) — ZIP with files organized by Subject/Chapter
 exports.downloadBackup = async (req, res) => {
-  const archiver = require('archiver');
-  const https = require('https');
-  const http = require('http');
-
   try {
     const [subjects, chapters, files] = await Promise.all([
       Subject.find({}).sort({ createdAt: 1 }).lean(),

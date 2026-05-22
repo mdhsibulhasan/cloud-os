@@ -1327,6 +1327,12 @@ async function viewBackup(){
       <button class="btn btn-green" onclick="downloadBackup()" style="padding:.7rem 2rem;font-size:.9rem">
         <i class="fas fa-download"></i> Download Backup ZIP
       </button>
+      <div id="backup-progress" style="display:none;margin-top:1rem">
+        <div style="background:rgba(0,255,136,.1);border-radius:6px;height:10px;overflow:hidden;margin-bottom:.5rem">
+          <div id="backup-prog-bar" style="height:100%;background:var(--green);width:0%;transition:width .8s ease"></div>
+        </div>
+        <div id="backup-prog-txt" style="font-size:.78rem;color:var(--muted)">Preparing backup...</div>
+      </div>
       <p style="font-size:.72rem;color:var(--muted);margin-top:1rem">
         ⚠️ ZIP contains all uploaded files organized by Subject → Chapter folders. May take a few minutes for large archives.
       </p>
@@ -1349,10 +1355,34 @@ async function viewBackup(){
 }
 
 async function downloadBackup(){
+  const btn=document.querySelector('[onclick="downloadBackup()"]');
+  const progWrap=document.getElementById('backup-progress');
+  const progBar=document.getElementById('backup-prog-bar');
+  const progTxt=document.getElementById('backup-prog-txt');
+
+  btn.disabled=true;
+  btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Preparing...';
+  progWrap.style.display='block';
+
+  // Animate progress bar (estimated time ~30s for large archives)
+  let pct=0;
+  const interval=setInterval(()=>{
+    // Slow progress: 0→80% over ~40s, then wait for actual completion
+    if(pct<80) pct+=Math.random()*3;
+    else if(pct<95) pct+=0.2;
+    progBar.style.width=Math.min(pct,95)+'%';
+    progTxt.textContent=`Preparing backup... ${Math.round(Math.min(pct,95))}%`;
+  },1000);
+
   try{
-    toast('Preparing ZIP backup... This may take a few minutes.');
     const response=await fetch('/api/admin/backup',{credentials:'include'});
-    if(!response.ok){const d=await response.json();throw new Error(d.message||'Backup failed');}
+    clearInterval(interval);
+    if(!response.ok){
+      const d=await response.json().catch(()=>({}));
+      throw new Error(d.message||'Backup failed');
+    }
+    progBar.style.width='100%';
+    progTxt.textContent='Download ready! Saving file...';
     const blob=await response.blob();
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
@@ -1360,8 +1390,17 @@ async function downloadBackup(){
     a.download=`cloudos-backup-${new Date().toISOString().split('T')[0]}.zip`;
     document.body.appendChild(a);a.click();
     URL.revokeObjectURL(url);document.body.removeChild(a);
+    progTxt.textContent='✅ Backup downloaded successfully!';
     toast('Backup ZIP downloaded successfully');
-  }catch(e){toast(e.message,'error');}
+    setTimeout(()=>{progWrap.style.display='none';pct=0;},3000);
+  }catch(e){
+    clearInterval(interval);
+    progTxt.textContent='❌ '+e.message;
+    toast(e.message,'error');
+  }finally{
+    btn.disabled=false;
+    btn.innerHTML='<i class="fas fa-download"></i> Download Backup ZIP';
+  }
 }
 
 // ── INIT ──
