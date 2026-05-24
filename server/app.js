@@ -33,6 +33,7 @@ app.use(helmet({
         "'self'",
         "https://cdnjs.cloudflare.com",
         "https://fonts.gstatic.com",
+        "https://cdn.jsdelivr.net",
         "data:"
       ],
       imgSrc: [
@@ -68,9 +69,15 @@ app.use(cors({
   credentials: true
 }));
 
-// Body parser
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// Body parser with UTF-8 encoding support
+app.use(express.json({ limit: '10mb', charset: 'utf-8' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb', charset: 'utf-8' }));
+
+// UTF-8 encoding middleware for all responses
+app.use((req, res, next) => {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  next();
+});
 
 // Cookie parser
 app.use(cookieParser());

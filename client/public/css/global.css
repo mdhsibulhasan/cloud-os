@@ -4,6 +4,17 @@
 ═══════════════════════════════════════════════════════════ */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap');
+
+/* ── Bengali Font (SolaimanLipi) ── */
+@font-face {
+  font-family: 'SolaimanLipi';
+  src: url('https://cdn.jsdelivr.net/gh/banglasoft/solaimanlipi@master/SolaimanLipi.woff2') format('woff2'),
+       url('https://cdn.jsdelivr.net/gh/banglasoft/solaimanlipi@master/SolaimanLipi.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
   /* ── Color Palette ── */
@@ -52,8 +63,9 @@
   --shadow-card: 0 4px 24px rgba(0,0,0,0.4), 0 0 0 1px var(--border);
 
   /* ── Typography ── */
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Inter', 'SolaimanLipi', 'Hind Siliguri', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-bengali: 'SolaimanLipi', 'Hind Siliguri', sans-serif;
 
   /* ── Spacing ── */
   --space-1: 0.25rem;
@@ -478,4 +490,105 @@ body::before {
 
 @media (max-width: 768px) {
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BENGALI LANGUAGE SUPPORT
+   SolaimanLipi font for proper Bengali rendering
+═══════════════════════════════════════════════════════════ */
+
+/* Bengali text rendering */
+.bengali, [lang="bn"], .bn-text {
+  font-family: var(--font-bengali) !important;
+  line-height: 1.8;
+  letter-spacing: 0.01em;
+}
+
+/* Apply Bengali font to inputs and textareas when typing Bengali */
+input[type="text"]:lang(bn),
+input[type="search"]:lang(bn),
+textarea:lang(bn),
+.form-input:lang(bn),
+.form-textarea:lang(bn) {
+  font-family: var(--font-bengali) !important;
+  line-height: 1.8;
+}
+
+/* Bengali support for all text elements */
+h1:lang(bn), h2:lang(bn), h3:lang(bn), 
+h4:lang(bn), h5:lang(bn), h6:lang(bn) {
+  font-family: var(--font-bengali) !important;
+  line-height: 1.6;
+}
+
+p:lang(bn), span:lang(bn), div:lang(bn), 
+label:lang(bn), button:lang(bn), a:lang(bn) {
+  font-family: var(--font-bengali) !important;
+  line-height: 1.8;
+}
+
+/* Bengali in file names, subject names, chapter names */
+.file-name:lang(bn),
+.subj-name:lang(bn),
+.chap-name:lang(bn),
+.folder-name:lang(bn) {
+  font-family: var(--font-bengali) !important;
+  line-height: 1.7;
+}
+
+/* Bengali in tables */
+table td:lang(bn),
+table th:lang(bn) {
+  font-family: var(--font-bengali) !important;
+  line-height: 1.7;
+}
+
+/* Bengali in modals and forms */
+.modal-box:lang(bn),
+.modal-header:lang(bn) h3 {
+  font-family: var(--font-bengali) !important;
+}
+
+/* Auto-detect Bengali characters and apply font */
+*:not(i):not(.fa):not(.fas):not(.far):not(.fab) {
+  /* Unicode range for Bengali: U+0980–U+09FF */
+  unicode-bidi: plaintext;
+}
+
+/* Improve Bengali text rendering */
+body {
+  text-rendering: optimizeLegibility;
+  -webkit-font-feature-settings: "liga", "kern";
+  font-feature-settings: "liga", "kern";
+}
+
+/* Bengali placeholder text */
+::placeholder:lang(bn) {
+  font-family: var(--font-bengali) !important;
+  opacity: 0.6;
+}
+
+/* Bengali in breadcrumbs */
+.breadcrumb:lang(bn),
+.breadcrumb-item:lang(bn) {
+  font-family: var(--font-bengali) !important;
+}
+
+/* Bengali in search results */
+.search-result:lang(bn),
+.search-result-title:lang(bn) {
+  font-family: var(--font-bengali) !important;
+  line-height: 1.7;
+}
+
+/* Bengali in notifications and toasts */
+.toast:lang(bn),
+.notification:lang(bn) {
+  font-family: var(--font-bengali) !important;
+  line-height: 1.7;
+}
+
+/* Ensure proper spacing for Bengali conjuncts */
+.bengali, [lang="bn"] {
+  word-spacing: 0.05em;
 }

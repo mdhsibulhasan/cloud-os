@@ -116,74 +116,84 @@
 
   /* ── ADMIN TABLES ── */
   .table-card { overflow-x: auto; -webkit-overflow-scrolling: touch; display: block; }
-  .table-card table { min-width: 580px; width: 100%; display: table; }
-  .table-card th, .table-card td { white-space: nowrap; padding: 0.5rem 0.6rem; font-size: 0.72rem; }
+  .table-card table { min-width: 900px; width: 100%; display: table; }
+  .table-card th, .table-card td { white-space: nowrap; padding: 0.6rem 0.75rem; font-size: 0.75rem; }
+  
   /* Sticky action column */
   .table-card td:last-child, .table-card th:last-child {
     position: sticky; right: 0;
-    background: #0a1a12;
-    box-shadow: -3px 0 8px rgba(0,0,0,0.5);
-    z-index: 2; min-width: 110px;
+    background: var(--bg2, #0a1a12);
+    box-shadow: -2px 0 8px rgba(0,0,0,0.3);
+    z-index: 2; 
+    min-width: 280px;
   }
+  
   /* Sticky first column */
   .table-card td:first-child, .table-card th:first-child {
     position: sticky; left: 0;
-    background: #0a1a12;
+    background: var(--bg2, #0a1a12);
     box-shadow: 2px 0 8px rgba(0,0,0,0.3);
     z-index: 2;
+    min-width: 150px;
   }
 
   /* ── ADMIN BUTTONS ── */
-  .btn-sm { font-size: 0.68rem !important; padding: 0.28rem 0.5rem !important; }
-  .btn-sm .btn-text { display: none; } /* icon only on mobile */
-  .badge { font-size: 0.62rem !important; padding: 0.15rem 0.4rem !important; }
+  .btn-sm, .btn-xs { 
+    font-size: 0.7rem !important; 
+    padding: 0.3rem 0.6rem !important;
+    white-space: nowrap !important;
+    margin: 0.15rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.25rem !important;
+  }
+  .btn-sm i, .btn-xs i { font-size: 0.7rem !important; }
+  .badge { font-size: 0.65rem !important; padding: 0.2rem 0.5rem !important; }
 
   /* ── ADMIN SECTION HEADER ── */
-  .section-header { flex-wrap: wrap; gap: 0.5rem; padding: 0.75rem; }
-  .section-header h2 { font-size: 0.95rem; }
-  .section-header .btn { font-size: 0.72rem; padding: 0.4rem 0.7rem; }
+  .section-header { flex-wrap: wrap; gap: 0.75rem; padding: 0.85rem 1rem; }
+  .section-header h2 { font-size: 1.1rem; }
+  .section-header .btn { font-size: 0.75rem; padding: 0.5rem 0.85rem; }
 
   /* ── ADMIN PENDING GRID ── */
   #pending-grid { grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)) !important; gap: 0.75rem !important; }
+  #pending-grid .btn { font-size: 0.75rem !important; padding: 0.4rem 0.6rem !important; }
 
   /* ── ADMIN SUBJECTS GRID ── */
   #subjects-list > div { grid-template-columns: 1fr !important; }
 
   /* ── MODALS — bottom sheet ── */
-  .modal-overlay { align-items: flex-end; padding: 0; }
-  .modal { width: 100%; max-width: 100%; border-radius: 16px 16px 0 0; max-height: 90vh; overflow-y: auto; }
+  .modal-overlay, .modal-ov { align-items: flex-end; padding: 0; }
+  .modal, .modal-box { width: 100%; max-width: 100%; border-radius: 16px 16px 0 0; max-height: 95vh; overflow-y: auto; margin-top: auto; }
 
   /* ── CHAT ── */
   .chat-layout { grid-template-columns: 1fr; height: auto; }
-  .chat-list { max-height: 180px; }
-  .chat-window { height: 380px; }
+  .chat-list { max-height: 200px; }
+  .chat-window, .chat-win { height: 400px; }
 
   /* ── FORMS ── */
   .form-grid { grid-template-columns: 1fr; }
-  .form-input, .form-select, .form-textarea { font-size: 16px !important; } /* prevent iOS zoom */
+  .form-input, .form-select, .form-textarea { font-size: 16px !important; padding: 0.7rem 0.85rem !important; }
 
   /* ── STAT CARDS ── */
   .stat-card { padding: 0.75rem; }
   .stat-num { font-size: 1.5rem; }
 
   /* ── PDF VIEWER ── */
-  .pdf-window { width: 100vw; height: 96vh; border-radius: 12px 12px 0 0; }
+  .pdf-window { width: 100vw; height: 95vh; border-radius: 12px 12px 0 0; }
   .pdf-overlay { padding: 0; align-items: flex-end; }
-  .pdf-toolbar { flex-wrap: wrap; gap: 0.4rem; padding: 0.6rem 0.75rem; }
+  .pdf-toolbar, .pdf-controls { flex-wrap: wrap; gap: 0.5rem; padding: 0.75rem; border-radius: 8px; }
   .pdf-title { font-size: 0.75rem; max-width: 55%; }
-  .pdf-controls { gap: 0.3rem; }
-  .pdf-btn { width: 26px; height: 26px; font-size: 0.7rem; }
+  .pdf-btn, .pdf-controls .btn { width: 26px; height: 26px; font-size: 0.75rem; padding: 0.4rem 0.7rem; }
   .pdf-page-info, .pdf-zoom { font-size: 0.65rem; }
+  .pdf-page-canvas { border-radius: 6px; border: 1px solid rgba(0,255,136,0.15); box-shadow: 0 2px 8px rgba(0,0,0,0.2); margin-bottom: 1rem; }
 
   /* ── IMAGE VIEWER ── */
   .img-window img { max-height: 80vh; }
 
-  /* ── DASHBOARD MODALS ── */
-  .modal-ov { padding: 0; align-items: flex-end; }
-  .modal.modal-pdf { width: 100vw; height: 96vh; border-radius: 12px 12px 0 0; }
-
   /* ── TOAST ── */
-  .toast { left: 0.75rem; right: 0.75rem; bottom: 0.75rem; min-width: unset; }
+  .toast-container { left: 1rem; right: 1rem; bottom: 1rem; }
+  .toast { left: 0.75rem; right: 0.75rem; bottom: 0.75rem; min-width: unset; width: 100%; }
 
   /* ── SIDEBAR PROFILE ── */
   .sb-profile { padding: 0.7rem; }
@@ -195,6 +205,15 @@
 
   /* ── BACKUP STATS ── */
   #backup-stats > div { grid-template-columns: repeat(2, 1fr) !important; }
+  
+  /* ── BUTTONS ── */
+  .btn { font-size: 0.8rem !important; padding: 0.6rem 1rem !important; }
+  .btn i { font-size: 0.75rem !important; }
+  
+  /* ── TABLE IMPROVEMENTS ── */
+  .table-card button, .table-card a { min-height: 32px !important; min-width: 32px !important; }
+  .table-card-header { padding: 0.85rem 1rem !important; }
+  .table-card-header h3 { font-size: 0.9rem !important; }
 }
 
 /* ── SMALL MOBILE (≤480px) ── */
@@ -205,7 +224,7 @@
   .section-header { flex-direction: column; align-items: flex-start; }
   .section-header > div { display: flex; gap: 0.4rem; flex-wrap: wrap; width: 100%; }
   .table-card th, .table-card td { font-size: 0.65rem; padding: 0.4rem 0.45rem; }
-  .topbar-title { display: none; } /* hide title on very small screens */
+  .topbar-title { display: none; }
 }
 
 /* ── IOS SAFE AREA ── */
@@ -214,6 +233,7 @@
   .sidebar { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
   .main { padding-bottom: max(0px, env(safe-area-inset-bottom)); }
   .toast { bottom: max(0.75rem, env(safe-area-inset-bottom)); }
+  .toast-container { bottom: max(1.5rem, env(safe-area-inset-bottom)); right: max(1.5rem, env(safe-area-inset-right)); }
 }
 
 /* ── PREVENT ZOOM ON INPUT FOCUS (iOS) ── */
@@ -231,8 +251,9 @@
 
 /* ── LANDSCAPE MOBILE ── */
 @media (max-width: 768px) and (orientation: landscape) {
-  .pdf-window { height: 92vh; }
-  .chat-window { height: 280px; }
+  .hero { min-height: 100vh; padding-top: 70px; }
+  .pdf-window { height: 90vh; }
+  .chat-window, .chat-win { height: 300px; }
   .modal { max-height: 85vh; }
 }
 
@@ -243,7 +264,7 @@
 
 /* ── PRINT ── */
 @media print {
-  .sidebar, .hamburger, .topbar, .toast, #bg-canvas, #space-canvas { display: none !important; }
+  .sidebar, .hamburger, .topbar, .toast, .toast-container, #bg-canvas, #space-canvas { display: none !important; }
   .main { margin-left: 0 !important; }
   body { background: white; color: black; }
 }

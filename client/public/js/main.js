@@ -505,3 +505,94 @@ window.app.scrollToTop = function(smooth = true) {
     });
   }
 };
+
+
+// ═══════════════════════════════════════════════════════════
+// BENGALI LANGUAGE AUTO-DETECTION
+// Automatically detects and applies Bengali font to text
+// ═══════════════════════════════════════════════════════════
+
+// Bengali Unicode range: U+0980–U+09FF
+function containsBengali(text) {
+  if (!text) return false;
+  const bengaliRegex = /[\u0980-\u09FF]/;
+  return bengaliRegex.test(text);
+}
+
+// Apply Bengali font to element if it contains Bengali text
+function applyBengaliFont(element) {
+  if (!element) return;
+  
+  const text = element.textContent || element.value || '';
+  if (containsBengali(text)) {
+    element.setAttribute('lang', 'bn');
+    element.classList.add('bengali');
+  } else {
+    element.removeAttribute('lang');
+    element.classList.remove('bengali');
+  }
+}
+
+// Auto-detect Bengali in all text elements
+function detectBengaliInPage() {
+  // Text elements to check
+  const selectors = [
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'p', 'span', 'div', 'label', 'button', 'a',
+    '.file-name', '.subj-name', '.chap-name', '.folder-name',
+    'td', 'th', '.breadcrumb-item', '.search-result-title'
+  ];
+  
+  selectors.forEach(selector => {
+    document.querySelectorAll(selector).forEach(element => {
+      applyBengaliFont(element);
+    });
+  });
+}
+
+// Auto-detect Bengali in input fields as user types
+function initBengaliInputDetection() {
+  const inputSelectors = 'input[type="text"], input[type="search"], textarea, .form-input, .form-textarea';
+  
+  document.addEventListener('input', (e) => {
+    if (e.target.matches(inputSelectors)) {
+      applyBengaliFont(e.target);
+    }
+  });
+  
+  // Also check on page load
+  document.querySelectorAll(inputSelectors).forEach(input => {
+    applyBengaliFont(input);
+  });
+}
+
+// Initialize Bengali detection
+document.addEventListener('DOMContentLoaded', () => {
+  detectBengaliInPage();
+  initBengaliInputDetection();
+  
+  // Re-detect when content changes (for dynamic content)
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      mutation.addedNodes.forEach((node) => {
+        if (node.nodeType === 1) { // Element node
+          applyBengaliFont(node);
+          node.querySelectorAll('*').forEach(child => applyBengaliFont(child));
+        }
+      });
+    });
+  });
+  
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+});
+
+// Export Bengali detection functions
+window.app.bengali = {
+  containsBengali,
+  applyBengaliFont,
+  detectBengaliInPage,
+  initBengaliInputDetection
+};
