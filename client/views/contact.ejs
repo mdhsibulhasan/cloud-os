@@ -127,13 +127,46 @@
 
     .toast {
       position: fixed; bottom: 2rem; right: 2rem; z-index: 999;
-      background: rgba(10,26,18,.95); border: 1px solid var(--green);
-      border-radius: 10px; padding: 1rem 1.5rem;
-      color: var(--green); font-size: .9rem;
-      transform: translateY(100px); opacity: 0;
-      transition: transform .3s, opacity .3s;
+      background: rgba(10,26,18,.97);
+      border: 1px solid var(--green);
+      border-radius: 12px;
+      padding: 1.2rem 1.5rem;
+      min-width: 320px;
+      max-width: 420px;
+      transform: translateY(100px) scale(0.9); opacity: 0;
+      transition: transform .4s cubic-bezier(0.34,1.56,0.64,1), opacity .4s ease;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 20px rgba(0,255,136,0.2);
     }
-    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.show { transform: translateY(0) scale(1); opacity: 1; }
+    .toast-header {
+      display: flex; align-items: center; gap: .7rem;
+      margin-bottom: .8rem;
+      padding-bottom: .8rem;
+      border-bottom: 1px solid rgba(0,255,136,.2);
+    }
+    .toast-icon-box {
+      width: 38px; height: 38px;
+      background: rgba(0,255,136,.15);
+      border: 1px solid rgba(0,255,136,.4);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+    }
+    .toast-title {
+      font-weight: 700; font-size: .95rem;
+      display: flex; align-items: center; gap: .4rem;
+    }
+    .toast-logo { color: var(--green); font-size: .85rem; }
+    .toast-body {
+      font-size: .88rem; line-height: 1.5;
+      color: #d1d5db;
+    }
+    .toast.error { border-color: #ef4444; box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 20px rgba(239,68,68,0.2); }
+    .toast.error .toast-icon-box { background: rgba(239,68,68,.15); border-color: rgba(239,68,68,.4); color: #ef4444; }
+    .toast.error .toast-title { color: #ef4444; }
+    .toast.success .toast-icon-box { color: var(--green); }
+    .toast.success .toast-title { color: var(--green); }
 
     @media (max-width: 680px) {
       .contact-grid { grid-template-columns: 1fr; }
@@ -216,7 +249,18 @@
   </div>
 </div>
 
-<div class="toast" id="toast"><i class="fas fa-check-circle"></i> Message sent successfully!</div>
+<div class="toast" id="toast">
+  <div class="toast-header">
+    <div class="toast-icon-box">
+      <i class="fas fa-check-circle"></i>
+    </div>
+    <div class="toast-title">
+      <i class="fas fa-cloud"></i>
+      <span class="toast-logo">CloudOS</span>
+    </div>
+  </div>
+  <div class="toast-body">Message sent successfully!</div>
+</div>
 
 <script>
 // Space canvas
@@ -276,27 +320,43 @@ document.getElementById('contact-form').addEventListener('submit', async functio
     
     if (data.success) {
       this.reset();
-      const toast = document.getElementById('toast');
-      toast.innerHTML = '<i class="fas fa-check-circle"></i> ' + data.message;
-      toast.style.borderColor = 'var(--green)';
-      toast.style.color = 'var(--green)';
-      toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 3500);
+      showToast('success', data.message || 'Message sent successfully! We will get back to you soon.');
     } else {
       throw new Error(data.message || 'Failed to send message');
     }
   } catch (error) {
-    const toast = document.getElementById('toast');
-    toast.innerHTML = '<i class="fas fa-times-circle"></i> ' + error.message;
-    toast.style.borderColor = '#ef4444';
-    toast.style.color = '#ef4444';
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 3500);
+    showToast('error', error.message || 'Failed to send message. Please try again later.');
   } finally {
     btn.innerHTML = originalHTML;
     btn.disabled = false;
   }
 });
+
+function showToast(type, message) {
+  const toast = document.getElementById('toast');
+  const iconBox = toast.querySelector('.toast-icon-box i');
+  const body = toast.querySelector('.toast-body');
+  
+  // Update content
+  body.textContent = message;
+  
+  // Update icon and style based on type
+  if (type === 'success') {
+    toast.className = 'toast success';
+    iconBox.className = 'fas fa-check-circle';
+  } else if (type === 'error') {
+    toast.className = 'toast error';
+    iconBox.className = 'fas fa-times-circle';
+  }
+  
+  // Show toast
+  toast.classList.add('show');
+  
+  // Hide after 4 seconds
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 4000);
+}
 </script>
 </body>
 </html>
